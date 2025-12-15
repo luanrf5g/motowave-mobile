@@ -80,17 +80,17 @@ export const History = () => {
                 latitude: item.route[0].latitude,
                 longitude: item.route[0].longitude,
                 latitudeDelta: 0.01,
-                longitudeDelta: 0.02
+                longitudeDelta: 0.01
               }}
               zoomEnabled={false}
               pitchEnabled={false}
               scrollEnabled={false}
             >
-              {/* <Polyline
+              <Polyline
                 coordinates={item.route}
                 strokeColor="#ff4500"
                 strokeWidth={4}
-              /> */}
+              />
             </MapView>
           )}
 
