@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { Alert, FlatList, LayoutAnimation, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Polyline } from "react-native-maps";
 
 const HISTORY_KEY = '@motowave:history'
@@ -65,119 +65,81 @@ export const History = () => {
     } : undefined
 
     return (
-      // <View style={styles.card}>
-      //   {/* Cabeçalho do card */}
-      //   <View style={styles.cardHeader}>
-      //     <View>
-      //       <Text style={styles.dateText}>{new Date(item.id).toLocaleDateString()} - {new Date(item.id).toLocaleTimeString()}</Text>
-      //       <Text style={styles.tripTitle}>
-      //         {item.cities.length > 1 ? `${item.cities[0]} -> ${item.cities[item.cities.length - 1]}` : `Rolezinho local`}
-      //       </Text>
-      //     </View>
-      //     <TouchableOpacity onPress={() => deleteTrip(item.id)}>
-      //       <MaterialCommunityIcons name={"trash-can-outline"} size={24} color="#e74c3c" />
-      //     </TouchableOpacity>
-      //   </View>
-
-      //   {/* Mini mapa estático */}
-      //   <View style={styles.mapContainer}>
-      //     {initalRegion && (
-      //       <MapView
-      //         style={StyleSheet.absoluteFillObject}
-      //         initialRegion={{
-      //           latitude: item.route[0].latitude,
-      //           longitude: item.route[0].longitude,
-      //           latitudeDelta: 0.01,
-      //           longitudeDelta: 0.01
-      //         }}
-      //         zoomEnabled={false}
-      //         pitchEnabled={false}
-      //         scrollEnabled={false}
-      //       >
-      //         <Polyline
-      //           coordinates={item.route}
-      //           strokeColor="#ff4500"
-      //           strokeWidth={4}
-      //         />
-      //       </MapView>
-      //     )}
-
-      //     {/* Rodapé do card */}
-      //     <View style={styles.cardFooter}>
-      //       <View style={styles.stat}>
-      //         <Text style={styles.statLabel}>Distância</Text>
-      //         <Text style={styles.statValue}>{item.distance.toFixed(2)}</Text>
-      //       </View>
-      //       <View style={styles.stat}>
-      //         <Text style={styles.statLabel}>Cidades</Text>
-      //         <Text style={styles.statValue}>{item.cities.length}</Text>
-      //       </View>
-      //     </View>
-      //   </View>
-      // </View>
       <View style={styles.newCard}>
         <View style={styles.tripCard}>
           <Text style={styles.titleTrip}>Viagem de Férias</Text>
-            <View style={styles.tripInfo}>
+          <View style={styles.tripInfo}>
+            {item.cities.length <= 1 ? (
+              <Text style={{textAlign: 'center', fontSize: 20, fontWeight: 'bold', marginBottom: 8,}}>
+                Rolezinho local
+              </Text>
+            ) : (
               <View style={styles.tripInfoView}>
                 <Text style={styles.titleInfoTrip}>{item.cities[0].name}</Text>
                 <Text>{`->`}</Text>
                 <Text style={styles.titleInfoTrip}>{item.cities[item.cities.length - 1].name}</Text>
               </View>
-              <View style={styles.tripInfoView}>
-                <Text style={styles.tripInfoSubtitle}>{item.distance.toFixed(1)} Km Totais</Text>
-                <Text style={styles.tripInfoSubtitle}>{item.cities.length}
-                  {item.cities.length > 1
-                    ? ` Conhecida`
-                    : ` Conhecidas`
-                  }
-                </Text>
-              </View>
-        </View>
-        <View style={styles.cardMapView}>
-          {initalRegion && (
-            <MapView
-              style={[StyleSheet.absoluteFillObject, { borderRadius: 20 }]}
-              initialRegion={{
-                latitude: item.route[0].latitude,
-                longitude: item.route[0].longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01
-              }}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              scrollEnabled={false}
-            >
-              <Polyline
-                coordinates={item.route}
-                strokeColor="#ff4500"
-                strokeWidth={4}
-              />
-            </MapView>
-          )}
+            )}
+            <View style={styles.tripInfoView}>
+              <Text style={styles.tripInfoSubtitle}>{item.distance.toFixed(2)} Km Totais</Text>
+              <Text style={styles.tripInfoSubtitle}>{item.cities.length}
+                {item.cities.length > 1
+                  ? ` Conhecida`
+                  : ` Conhecidas`
+                }
+              </Text>
+            </View>
+          </View>
+          <View style={styles.cardMapView}>
+            {initalRegion && (
+              <MapView
+                style={[StyleSheet.absoluteFillObject, { borderRadius: 20 }]}
+                initialRegion={{
+                  latitude: item.route[0].latitude,
+                  longitude: item.route[0].longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01
+                }}
+                zoomEnabled={false}
+                pitchEnabled={false}
+                scrollEnabled={false}
+              >
+                <Polyline
+                  coordinates={item.route}
+                  strokeColor="#ff4500"
+                  strokeWidth={4}
+                />
+              </MapView>
+            )}
           </View>
         </View>
-        <Text style={styles.tripCardFooter}>CREATEAD {format(new Date(item.id).toLocaleDateString(), 'MMM dd, yyyy', { locale: ptBR})}</Text>
+        <Text
+          style={styles.tripCardFooter}>
+          CREATED {format(item.date, 'MMM d, yyyy')}
+        </Text>
       </View>
-    )
+      )
   }
+
+  const test: string[] = [];
 
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Meu Diário de Bordo</Text>
-      {/* {history.length === 0 ? (
+      {history.length === 0 ? (
         <View style={styles.emptyState}>
           <MaterialCommunityIcons name="road-variant" size={60} color='#ddd' />
           <Text style={styles.emptyText}>Nenhuma viagem gravada ainda.</Text>
           <Text style={styles.emptySubtext}>Vá para o mapa e inicie uma aventura.</Text>
         </View>
-      ) : ( */}
+      ) : (
         <FlatList
           data={history}
           keyExtractor={item => item.id}
           renderItem={renderCard}
           contentContainerStyle={{ paddingBottom: 20 }}
         />
+      )}
     </View>
   )
 }
@@ -267,7 +229,7 @@ const styles = StyleSheet.create({
   },
 
   titleTrip: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center'

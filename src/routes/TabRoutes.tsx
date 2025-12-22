@@ -43,7 +43,7 @@ export const TabRoutes = () => {
         }}
       />
 
-      {/* <Tab.Screen
+      <Tab.Screen
         name="History"
         component={History}
         options={{
@@ -52,7 +52,7 @@ export const TabRoutes = () => {
             <MaterialCommunityIcons name="book-open-page-variant" color={color} size={size} />
           )
         }}
-      /> */}
+      />
     </Tab.Navigator>
   )
 }

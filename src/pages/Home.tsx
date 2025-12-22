@@ -93,12 +93,13 @@ export const Home = () => {
     }
   };
 
+  // --- LÓGICA DE ATUALIZAÇÃO
   const updateLocation = (newLocation: Location.LocationObject) => {
-    const newPoint = newLocation.coords;
+    let newPoint = newLocation.coords;
 
     if (tripSession.route.length > 0) {
-      const lastPoint = tripSession.route[tripSession.route.length - 1];
-      const dist = haversine(lastPoint, newPoint, { unit: 'km' }) || 0;
+      let lastPoint = tripSession.route[tripSession.route.length - 1];
+      let dist = haversine(lastPoint, newPoint, { unit: 'km' }) || 0;
 
       if (dist > 0.005) { // Movimento > 5 metros
         tripSession.distance += dist;
@@ -125,8 +126,9 @@ export const Home = () => {
   // --- CICLO DE VIDA ---
   useEffect(() => {
     const initApp = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+
+      if (foregroundStatus !== 'granted') {
         Alert.alert('Permissão Negada', 'O MotoWave precisa do GPS para funcionar.');
         return;
       }
@@ -205,7 +207,7 @@ export const Home = () => {
   };
 
   const saveTripToHistory = async () => {
-    if (tripSession.distance < 0.1) {
+    if (tripSession.distance < 0.05) {
       Alert.alert("Viagem muito curta", "Não há dados suficientes para salvar.");
       return;
     }
