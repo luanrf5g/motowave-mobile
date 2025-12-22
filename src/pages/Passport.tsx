@@ -3,12 +3,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native"
-import { Trip } from "./History";
 
-const DISTANCE_KEY = '@motowave:distance'
-const CITIES_KEY = '@motowave:cities'
+const GLOBAL_STATS_KEY = '@motowave:global_stats'
 
-const HISTORY_KEY = '@motowave:history'
+interface Cities {
+  name: string,
+  latitude: number,
+  longitude: number
+}
+interface GlobalStats {
+  totalKm: number,
+  allCities: Cities[]
+}
 
 const LEVEL_SYSTEM = [
   { level: 1, title: "Garagem", minKm: 0, color: "#95a5a6" },
@@ -25,7 +31,6 @@ export const Passport = () => {
   const [nextLevel, setNextLevel] = useState(LEVEL_SYSTEM[1])
   const [progress, setProgress] = useState(0)
   const [citiesCount, setCitiesCount] = useState(0)
-  const [history, setHistory] = useState<Trip[]>([]);
 
   const calculateLevel = (km: number) => {
     let level = LEVEL_SYSTEM[0]
@@ -56,40 +61,14 @@ export const Passport = () => {
       const loadStats = async () => {
         setLoading(true)
         try {
-          const savedCities = await AsyncStorage.getItem(CITIES_KEY)
+          const globalStatsJson = await AsyncStorage.getItem(GLOBAL_STATS_KEY)
+          const globalStats: GlobalStats = globalStatsJson
+            ? JSON.parse(globalStatsJson)
+            : { totalKm: 0, allCities: []}
 
-          const savedHistory = await AsyncStorage.getItem(HISTORY_KEY)
-
-          if(savedHistory) {
-            try {
-              const json = await AsyncStorage.getItem(HISTORY_KEY)
-              if (json) {
-                const parsed: Trip[] = JSON.parse(json);
-                setHistory(parsed.reverse())
-              }
-
-              history.map(item => setTotalKm(totalKm + item.distance))
-              calculateLevel(totalKm)
-            } catch (e) {
-              console.error(e)
-            }
-          }
-
-          // if(savedDistance) {
-          //   const km = parseFloat(savedDistance)
-          //   setTotalKm(km)
-          //   calculateLevel(km)
-          // } else {
-          //   setTotalKm(0);
-          //   calculateLevel(0)
-          // }
-
-          if (savedCities) {
-            const cities = JSON.parse(savedCities)
-            setCitiesCount(cities.length)
-          } else {
-            setCitiesCount(0)
-          }
+          setTotalKm(globalStats.totalKm)
+          calculateLevel(totalKm)
+          setCitiesCount(globalStats.allCities.length)
         } catch (e) {
           console.error("Erro ao ler passaporte", e)
         } finally {
@@ -154,32 +133,36 @@ export const Passport = () => {
       </View>
 
       {/* Troféus / Conquistas (Estático por enquanto) */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Conquistas Recentes</Text>
 
-        {/* Exemplo de badge Desbloqueada */}
-        <View style={styles.achievementRow}>
-          <View style={[styles.achievementIcon, {backgroundColor: "#f1c40f"}]}>
-            <MaterialCommunityIcons name="star" size={24} color="white" />
+      {/*
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Conquistas Recentes</Text>
+
+          Exemplo de badge Desbloqueada
+          <View style={styles.achievementRow}>
+            <View style={[styles.achievementIcon, {backgroundColor: "#f1c40f"}]}>
+              <MaterialCommunityIcons name="star" size={24} color="white" />
+            </View>
+            <View style={styles.achievementInfo}>
+              <Text style={styles.achievementTitle}>Primeira Aventura</Text>
+              <Text style={styles.achievementDesc}>Instalou o MotoWave</Text>
+            </View>
           </View>
-          <View style={styles.achievementInfo}>
-            <Text style={styles.achievementTitle}>Primeira Aventura</Text>
-            <Text style={styles.achievementDesc}>Instalou o MotoWave</Text>
+
+          Exemplo de Badge Bloqueada
+          <View style={[styles.achievementRow, { opacity: 0.5 }]}>
+            <View style={[styles.achievementIcon, {backgroundColor: '#ccc'}]}>
+              <MaterialCommunityIcons name="lock" size={24} color="white" />
+            </View>
+            <View style={styles.achievementInfo}>
+              <Text style={styles.achievementTitle}>Iron Butt</Text>
+              <Text style={styles.achievementDesc}>Rode 500km em um dia</Text>
+            </View>
           </View>
         </View>
+        <View style={{height: 40}} />
 
-        {/* Exemplo de Badge Bloqueada */}
-        <View style={[styles.achievementRow, { opacity: 0.5 }]}>
-          <View style={[styles.achievementIcon, {backgroundColor: '#ccc'}]}>
-            <MaterialCommunityIcons name="lock" size={24} color="white" />
-          </View>
-          <View style={styles.achievementInfo}>
-            <Text style={styles.achievementTitle}>Iron Butt</Text>
-            <Text style={styles.achievementDesc}>Rode 500km em um dia</Text>
-          </View>
-        </View>
-      </View>
-      <View style={{height: 40}} />
+      */}
     </ScrollView>
   )
 }
