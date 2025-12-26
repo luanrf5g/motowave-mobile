@@ -2,7 +2,8 @@ import { FontAwesome, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { supabase } from "../lib/supabase";
 
 const GLOBAL_STATS_KEY = '@motowave:global_stats'
 
@@ -80,6 +81,30 @@ export const Passport = () => {
     }, [])
   )
 
+  async function handleSignOut() {
+    Alert.alert(
+      "Sair da Conta",
+      "Tem certeza que deseja sair da sua conta?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: async () => {
+            const {error} = await supabase.auth.signOut()
+
+            if(error) {
+              Alert.alert("Erro ao sair", error.message)
+            }
+          }
+        }
+      ]
+    )
+  }
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -92,6 +117,19 @@ export const Passport = () => {
     <ScrollView style={styles.container}>
       {/* Cabeçalho do Perfil */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={handleSignOut} style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          width: 40,
+          height: 40,
+          borderRadius: 8,
+          backgroundColor: '#ff000030',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <MaterialCommunityIcons name="power" size={24} color="#ff0000"/>
+        </TouchableOpacity>
         <View style={styles.avatarContainer}>
           <MaterialCommunityIcons name="account-circle" size={80} color= "#333" />
         </View>

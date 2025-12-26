@@ -1,11 +1,47 @@
-import { StyleSheet, Text, View } from "react-native"
+import { useState } from "react";
+import { Alert, Button, StyleSheet, Text, View } from "react-native"
+import { supabase } from "../lib/supabase";
 
 export const Social = () => {
+  const [status, setStatus] = useState('');
+
+  async function readStatus() {
+    const { data, error } = await supabase.from('profiles').select('*').limit(1);
+
+    if(error) {
+      console.error(error.message);
+      setStatus('Erro na conexão: ' + error.message);
+    } else {
+      setStatus('Conexão com o Banco: OK! (dados recebidos)')
+    }
+  }
+
+  async function createUser() {
+    const emailTest = `motoqueiro_${Math.floor(Math.random() * 1000)}@teste.com`;
+
+    const {data, error} = await supabase.auth.signUp({
+      email: emailTest,
+      password: 'senha123456',
+      options: {
+        data: {
+          username: `Motoqueiro_${Math.floor(Math.random() * 1000)}`,
+        }
+      }
+    })
+
+    if(error) {
+      Alert.alert('Erro na criação do usuário: ' + error.message);
+    } else {
+      Alert.alert('Sucesso', 'Verifique seu email (se a confirmação estiver ativa no Supabase) para completar o cadastro.');
+      console.log(data);
+    }
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Rede de Viajantes</Text>
-    <Text>Aqui aparecerão seus amigos, rotas agendadas e alertas SOS.</Text>
-    <Text>Funcionalidade Futura!</Text>
+    <View style={{padding: 50, gap: 20}}>
+      <Text>Status: {status}</Text>
+      <Button title="Testar conexão (Leitura)" onPress={readStatus} />
+      <Button title="Criar Usuário de Teste" onPress={createUser} />
     </View>
   )
 }

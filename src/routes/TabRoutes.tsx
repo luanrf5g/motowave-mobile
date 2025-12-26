@@ -53,6 +53,17 @@ export const TabRoutes = () => {
           )
         }}
       />
+
+      <Tab.Screen
+        name="Social"
+        component={Social}
+        options={{
+          title: 'Social',
+          tabBarIcon: ({color, size}) => (
+            <MaterialCommunityIcons name="account-group" color={color} size={size} />
+          )
+        }}
+      />
     </Tab.Navigator>
   )
 }

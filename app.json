@@ -52,7 +52,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow MotoWave to use your location."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

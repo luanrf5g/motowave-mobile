@@ -1,12 +1,10 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { TabRoutes } from './src/routes/TabRoutes';
+import { Routes } from './src/routes';
+import { ThemeProvider } from 'react-native-rapi-ui'
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <TabRoutes/>
-    </NavigationContainer>
+    <ThemeProvider>
+      <Routes />
+    </ThemeProvider>
   );
 }
