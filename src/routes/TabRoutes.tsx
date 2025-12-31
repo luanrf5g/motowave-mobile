@@ -17,7 +17,8 @@ export const TabRoutes = () => {
         tabBarStyle: {
           backgroundColor: '#f5f5f5',
           borderTopWidth: 0,
-        }
+        },
+        headerShown: false
       }}
     >
       <Tab.Screen
@@ -50,17 +51,6 @@ export const TabRoutes = () => {
           title: 'Histórico',
           tabBarIcon: ({color, size}) => (
             <MaterialCommunityIcons name="book-open-page-variant" color={color} size={size} />
-          )
-        }}
-      />
-
-      <Tab.Screen
-        name="Social"
-        component={Social}
-        options={{
-          title: 'Social',
-          tabBarIcon: ({color, size}) => (
-            <MaterialCommunityIcons name="account-group" color={color} size={size} />
           )
         }}
       />

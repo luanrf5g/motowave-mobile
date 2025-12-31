@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { set } from 'date-fns';
 import { ActivityIndicator, View } from 'react-native';
+import { TripDetails } from '../pages/TripDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,7 +42,12 @@ export function Routes() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
         {session
-         ? (<Stack.Screen name="TabRoutes" component={TabRoutes}/>)
+         ? (
+          <Stack.Group>
+            <Stack.Screen name="TabRoutes" component={TabRoutes}/>
+            <Stack.Screen name="TripDetails" component={TripDetails} />
+          </Stack.Group>
+        )
          : (
           <Stack.Group>
             <Stack.Screen name="SignIn" component={SignIn} />

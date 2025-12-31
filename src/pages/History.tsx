@@ -1,156 +1,164 @@
+import { Alert, FlatList, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import MapView, { Marker } from "react-native-maps";
 import { useCallback, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import MapView, { Polyline } from "react-native-maps";
+import { ptBR } from 'date-fns/locale';
+import { format } from 'date-fns';
 
-const HISTORY_KEY = '@motowave:history'
+import { supabase } from "../lib/supabase";
+import { CustomHeader } from "../components/CustomHeader";
 
-interface Cities {
-  name: string,
-  latitude: number,
-  longitude: number
-}
-
-export interface Trip {
+interface Trip {
   id: string;
-  date: string;
-  distance: number;
-  cities: Cities[];
-  route: { latitude: number, longitude: number }[];
-}[]
+  title: string;
+  created_at: string;
+  total_distance: number;
+  start_lat: number | null;
+  start_lon: number | null;
+}
 
 export const History = () => {
   const [history, setHistory] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   const loadHistory = async () => {
+    setLoading(true);
     try {
-      const json = await AsyncStorage.getItem(HISTORY_KEY)
-      if (json) {
-        const parsed: Trip[] = JSON.parse(json);
-        setHistory(parsed.reverse())
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setHistory(data);
       }
-    } catch (e) {
-      console.error(e)
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useFocusEffect(
     useCallback(() => {
-      loadHistory()
+      loadHistory();
     }, [])
-  )
+  );
 
   const deleteTrip = async (id: string) => {
-    Alert.alert("Apagar", "Tem certeza?", [
-      { text: "Cancelar", style: 'destructive'},
-      { text: "Sim", onPress: async () => {
-        const newHistory = history.filter(item => item.id !== id);
-        setHistory(newHistory)
-        await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory.reverse()))
-        loadHistory()
+    Alert.alert("Apagar", "Tem certeza? Isso apagará a rota e as cidades dessa viagem também.", [
+      { text: "Cancelar", style: 'cancel'},
+      { text: "Sim, apagar", style: 'destructive', onPress: async () => {
+        const { error } = await supabase.from('trips').delete().eq('id', id);
+
+        if (!error) {
+          loadHistory();
+        } else {
+          Alert.alert("Erro", "Não foi possível apagar.");
+        }
       }}
-    ])
+    ]);
   };
 
-  const renderCard = ({ item }: { item: Trip}) => {
-    const initalRegion = item.route.length > 0 ? {
-      latitude: item.route[0].latitude,
-      longitude: item.route[0].latitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01
-    } : undefined
+  const renderCard = ({ item }: { item: Trip }) => {
+    // Data formatada
+    const dateFormatted = format(new Date(item.created_at), "d 'de' MMM, yyyy", { locale: ptBR });
 
     return (
-      <View style={styles.newCard}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('TripDetails', { tripId: item.id })}
+        style={styles.newCard}
+        activeOpacity={0.1}
+      >
         <View style={styles.tripCard}>
-          <Text style={styles.titleTrip}>Viagem de Férias</Text>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+             <Text style={styles.titleTrip}>{item.title || "Viagem sem nome"}</Text>
+             <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={24}
+                color="#C0392B"
+                onPress={() => deleteTrip(item.id)}
+             />
+          </View>
+
           <View style={styles.tripInfo}>
-            {item.cities.length <= 1 ? (
-              <Text style={{textAlign: 'center', fontSize: 20, fontWeight: 'bold', marginBottom: 8,}}>
-                Rolezinho local
-              </Text>
-            ) : (
-              <View style={styles.tripInfoView}>
-                <Text style={styles.titleInfoTrip}>{item.cities[0].name}</Text>
-                <Text>{`->`}</Text>
-                <Text style={styles.titleInfoTrip}>{item.cities[item.cities.length - 1].name}</Text>
-              </View>
-            )}
             <View style={styles.tripInfoView}>
-              <Text style={styles.tripInfoSubtitle}>{item.distance.toFixed(2)} Km Totais</Text>
-              <Text style={styles.tripInfoSubtitle}>{item.cities.length}
-                {item.cities.length > 1
-                  ? ` Conhecida`
-                  : ` Conhecidas`
-                }
-              </Text>
+              <Text style={styles.tripInfoSubtitle}>{item.total_distance.toFixed(1)} km percorridos</Text>
             </View>
           </View>
-          <View style={styles.cardMapView}>
-            {initalRegion && (
+
+          {/* Mini Mapa Leve */}
+          <View style={[styles.cardMapView, {borderWidth: 1, borderColor: '#ddd'}]}>
+            {item.start_lat !== null && item.start_lon !== null ? (
               <MapView
                 style={[StyleSheet.absoluteFillObject, { borderRadius: 20 }]}
                 initialRegion={{
-                  latitude: item.route[0].latitude,
-                  longitude: item.route[0].longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01
+                  latitude: item.start_lat,
+                  longitude: item.start_lon,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005
                 }}
+                liteMode={true}
                 zoomEnabled={false}
                 pitchEnabled={false}
                 scrollEnabled={false}
               >
-                <Polyline
-                  coordinates={item.route}
-                  strokeColor="#ff4500"
-                  strokeWidth={4}
-                />
+                 <Marker coordinate={{ latitude: item.start_lat, longitude: item.start_lon }} />
               </MapView>
+            ) : (
+                <View style={{flex:1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee'}}>
+                    <Text style={{color: '#999'}}>Sem mapa disponível</Text>
+                </View>
             )}
           </View>
         </View>
-        <Text
-          style={styles.tripCardFooter}>
-          CREATED {format(item.date, 'MMM d, yyyy')}
-        </Text>
-      </View>
-      )
-  }
-
-  const test: string[] = [];
+        <Text style={styles.tripCardFooter}>REALIZADA EM {dateFormatted.toUpperCase()}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Meu Diário de Bordo</Text>
-      {history.length === 0 ? (
-        <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="road-variant" size={60} color='#ddd' />
-          <Text style={styles.emptyText}>Nenhuma viagem gravada ainda.</Text>
-          <Text style={styles.emptySubtext}>Vá para o mapa e inicie uma aventura.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={history}
-          keyExtractor={item => item.id}
-          renderItem={renderCard}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      )}
+      <CustomHeader title="Diário de Bordo" subtitle="Minhas Aventuras" />
+
+      <View style={styles.content}>
+
+        {loading ? (
+            <ActivityIndicator size="large" color="#fff" style={{marginTop: 50}} />
+        ) : history.length === 0 ? (
+          <View style={styles.emptyState}>
+            <MaterialCommunityIcons name="road-variant" size={60} color='#ddd' />
+            <Text style={styles.emptyText}>Nenhuma viagem na nuvem.</Text>
+            <Text style={styles.emptySubtext}>Suas aventuras salvas aparecerão aqui.</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={history}
+            keyExtractor={item => item.id}
+            renderItem={renderCard}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            refreshing={loading}
+            onRefresh={loadHistory}
+          />
+        )}
+      </View>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#223C39',
-    padding: 20
+    backgroundColor: '#f5f5f5',
   },
-
+  content: {
+    flex: 1,
+    padding: 20,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -158,48 +166,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center'
   },
-
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    marginBottom: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    overflow: 'hidden'
-  },
-  cardHeader: {
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  dateText: { fontSize: 12, color: '#999' },
-  tripTitle: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-
-  mapContainer: {
-    height: 150,
-    width: '100%',
-    backgroundColor: '#eee'
-  },
-
-  cardFooter: {
-    flexDirection: 'row',
-    padding: 15,
-    justifyContent: 'space-around'
-  },
-  stat: { alignItems: 'center' },
-  statLabel: { fontSize: 10, color: '#999', textTransform: 'uppercase' },
-  statValue: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 100
+    marginTop: 50
   },
   emptyText: {
     fontSize: 18,
@@ -212,61 +183,51 @@ const styles = StyleSheet.create({
     color: '#bbb',
     marginTop: 5
   },
-
   newCard: {
     paddingHorizontal: 8,
     paddingTop: 8,
     paddingBottom: 14,
     backgroundColor: '#1F9893',
-    // alignItems: 'center',
     borderRadius: 40,
+    marginBottom: 20,
   },
-
   tripCard: {
     backgroundColor: '#F5F5F5',
     borderRadius: 32,
-    padding: 12,
+    padding: 15,
   },
-
   titleTrip: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#000',
-    textAlign: 'center'
+    flex: 1
   },
-
   tripInfo: {
-    marginVertical: 16,
+    marginVertical: 10,
   },
-
   tripInfoView: {
     flexDirection: 'row',
     justifyContent: 'space-between'
   },
-
-  titleInfoTrip: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-
   tripInfoSubtitle: {
     fontSize: 16,
-    color: '#000'
+    color: '#555',
+    fontWeight: '500'
   },
-
   cardMapView: {
     width: '100%',
-    height: 100,
+    height: 120,
     backgroundColor: '#fff',
     borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 10
   },
-
   tripCardFooter: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#0000004d',
+    color: 'rgba(0,0,0,0.4)',
     textAlign: 'center',
-    marginTop: 14,
+    marginTop: 10,
+    letterSpacing: 1
   }
-})
+});
