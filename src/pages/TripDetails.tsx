@@ -100,8 +100,6 @@ export const TripDetails = () => {
 
       const parsedRoute = rawRoute ? parseLineString(rawRoute) : [];
 
-      console.log(rawCities)
-
       const parsedCities = rawCities.map((c: any) => {
         const coords = parsePoint(c.location_wkt);
         return {
@@ -110,8 +108,6 @@ export const TripDetails = () => {
           longitude: coords.longitude
         };
       });
-
-      console.log(parsedCities)
 
       setTrip({
         id: data.id,
