@@ -28,7 +28,12 @@ export function Routes() {
             console.log('Sessão Anterior Expirada. Usuário precisa logar novamente.')
 
             await supabase.auth.signOut()
-            return;
+            const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
+              setSession(session)
+              setIsLoading(false)
+            })
+
+            return () => subscription.unsubscribe();
           }
 
           console.error('Erro crítico na sessão: ', error.message)
