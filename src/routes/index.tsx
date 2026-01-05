@@ -6,7 +6,6 @@ import { SignIn } from '../pages/Auth/SignIn';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { set } from 'date-fns';
 import { ActivityIndicator, View } from 'react-native';
 import { TripDetails } from '../pages/TripDetails';
 
@@ -17,17 +16,43 @@ export function Routes() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsLoading(false)
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-    const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setIsLoading(false)
-    })
+        if(error) {
+          if(
+            error.message.includes('Refresh Token Not Found') ||
+            error.message.includes('Invalid Refresh Token')
+          ) {
+            console.log('Sessão Anterior Expirada. Usuário precisa logar novamente.')
 
-    return () => subscription.unsubscribe();
+            await supabase.auth.signOut()
+            return;
+          }
+
+          console.error('Erro crítico na sessão: ', error.message)
+        }
+
+        if (session) {
+          await supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+            setIsLoading(false)
+          });
+
+          const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session)
+            setIsLoading(false)
+          })
+
+          return () => subscription.unsubscribe();
+        }
+      } catch (e) {
+        console.log('Erro genérico no checkSession: ', e)
+      }
+    }
+
+    checkSession();
   }, [])
 
   if(isLoading) {
@@ -48,13 +73,12 @@ export function Routes() {
             <Stack.Screen name="TripDetails" component={TripDetails} />
           </Stack.Group>
         )
-         : (
+        : (
           <Stack.Group>
             <Stack.Screen name="SignIn" component={SignIn} />
             <Stack.Screen name="SignUp" component={SignUp} />
           </Stack.Group>
-         )
-        }
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,29 +1,26 @@
-import { useNavigation } from "@react-navigation/native";
-import { StatusBar } from 'expo-status-bar'
-import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native"
-import { Layout, useTheme, Text, TextInput, Button, themeColor } from "react-native-rapi-ui"
-import { supabase } from "../../lib/supabase";
+import React, { useState } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  KeyboardAvoidingView, Platform, ActivityIndicator
+} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
+import { useNavigation } from '@react-navigation/native';
 
 export const SignUp = () => {
-  const { isDarkmode } = useTheme()
-  const navigation = useNavigation<any>();
-
-  const [username, setUsername] = useState('');
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false)
 
-  async function handleSignUp() {
-    if(!username || !email || !password) {
-      Alert.alert('Error', 'Por favor preencha todos os dados!');
-      return;
-    }
+  const handleSignUp = async () => {
+    if (!email || !password) return Alert.alert("Erro", "Preencha tudo");
 
     setLoading(true);
-
-
-    const { error } = await supabase.auth.signUp({
+    // Cria o usuário
+    const { data: { user }, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -31,93 +28,128 @@ export const SignUp = () => {
           username
         }
       }
-    })
+    });
 
-    setLoading(false);
-
-    if(error) {
-      Alert.alert('Error', error.message)
-    } else {
-      Alert.alert('Success', 'Conta criada com sucesso! Verifique seu email para confirmar sua conta.');
-      // navigation.navigate('SignIn');
+    if (error) {
+      setLoading(false);
+      Alert.alert("Erro ao cadastrar", error.message);
+      return;
     }
-  }
 
-  return(
+    if (user) {
+      Alert.alert("Sucesso", "Conta criada! Verifique seu e-mail ou faça login.");
+      navigation.goBack(); // Volta pro Login
+    }
+    setLoading(false);
+  };
+
+  return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1}}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
     >
-      <Layout>
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            padding: 20
-          }}
+      <View style={styles.header}>
+        <Text style={styles.title}>Criar Conta</Text>
+        <Text style={styles.subtitle}>Entre para o clube MotoWave</Text>
+      </View>
+
+      <View style={styles.form}>
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons name="account-outline" size={20} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Nome de usuário"
+            placeholderTextColor="#666"
+            value={username}
+            onChangeText={setUsername}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons name="email-outline" size={20} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Seu melhor e-mail"
+            placeholderTextColor="#666"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons name="lock-outline" size={20} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Crie uma senha forte"
+            placeholderTextColor="#666"
+            secureTextEntry={!visible}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setVisible(!visible)} style={{ paddingRight: 15 }}>
+            <MaterialCommunityIcons name={visible ? 'eye-off-outline' : 'eye-outline'} size={20} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.registerButton}
+          onPress={handleSignUp}
+          disabled={loading}
         >
-          <View style={{  alignItems: 'center', marginBottom: 30  }}>
-            <Text size="h1" fontWeight="bold" >MotoWave</Text>
-            <Text size="lg" style={{marginTop: 10, opacity: 0.5}}>
-              Crie seu passaporte de viagens
-            </Text>
-          </View>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.registerButtonText}>CADASTRAR</Text>
+          )}
+        </TouchableOpacity>
 
-          <View style={{  gap: 15  }}>
-            <Text fontWeight="medium" size="md">Nome do Piloto (username):</Text>
-            <TextInput
-              placeholder="Ex: Viajante Solitário"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-            />
-
-            <Text fontWeight="medium" size="md">E-mail:</Text>
-            <TextInput
-              placeholder="seu@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text fontWeight="medium" size="md">Senha:</Text>
-            <TextInput
-              placeholder="Digite sua senha"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-
-            <Button
-              text={loading ? "Criando conta..." : "Criar Conta"}
-              onPress={handleSignUp}
-              style={{marginTop: 10}}
-              disabled={loading}
-              status="primary"
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              marginTop: 30,
-            }}
-          >
-            <Text size="md">Já tem uma conta?</Text>
-            <Text
-              size="md"
-              fontWeight="bold"
-              style={{color: isDarkmode ? themeColor.white100 : themeColor.primary, marginLeft: 5 }}
-              onPress={() => navigation.navigate('SignIn')}
-            >
-              Fazer Login
-            </Text>
-          </View>
-        </ScrollView>
-      </Layout>
-      <StatusBar style="auto" />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>Já tenho conta</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
-  )
-}
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  header: { marginBottom: 40 },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#fff' },
+  subtitle: { fontSize: 16, color: '#27AE60', marginTop: 5 },
+
+  form: { width: '100%' },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E1E',
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    height: 55,
+  },
+  inputIcon: { marginLeft: 15, marginRight: 10 },
+  input: { flex: 1, color: '#fff', fontSize: 16, height: '100%' },
+
+  registerButton: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1,
+    borderColor: '#27AE60',
+    height: 55,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  registerButtonText: { color: '#27AE60', fontSize: 18, fontWeight: 'bold' },
+
+  backButton: { marginTop: 20, alignItems: 'center' },
+  backButtonText: { color: '#888' }
+});

@@ -14,6 +14,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
+import { darkMapStyle } from '../styles/mapStyle';
 
 // --- TIPAGEM ---
 interface City {
@@ -152,6 +153,8 @@ export const TripDetails = () => {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
+        provider={PROVIDER_GOOGLE}
+        customMapStyle={darkMapStyle}
         initialRegion={{
           latitude: trip.route_coords[0]?.latitude || -23.55,
           longitude: trip.route_coords[0]?.longitude || -46.63,

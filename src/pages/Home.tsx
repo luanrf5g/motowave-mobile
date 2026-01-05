@@ -4,11 +4,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { ActivityIndicator, Alert, Dimensions, Platform, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native"
 import haversine from "haversine"
 import { supabase } from "../lib/supabase"
-import MapView, { Polygon, Polyline } from "react-native-maps"
+import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { BlurView } from 'expo-blur'
 
 import { City, Route, TripServices } from "../services/tripServices"
 import { SaveTripModal } from '../components/saveTripModal'
+import { darkMapStyle } from '../styles/mapStyle'
 
 const STORAGE_KEYS = {
   ROUTE: '@motowave:route',
@@ -253,6 +255,8 @@ export const Home = () => {
         ? (
           <MapView
             style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            customMapStyle={darkMapStyle}
             initialRegion={{
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
@@ -274,19 +278,23 @@ export const Home = () => {
           <View style={styles.loading}><ActivityIndicator size="large" color="#27AE60"/></View>
         )}
 
-        <View style={styles.hudContainer}>
-          <View style={styles.hudItem}>
-            <Text style={styles.hudLabel}>DISTÂNCIA</Text>
-            <Text style={styles.hudValue}>
-              {distanceDisplay.toFixed(1)}
-              <Text style={{fontSize: 12}}>km</Text>
-            </Text>
-          </View>
-          <View style={styles.divider}/>
-          <View style={styles.hudItem}>
-            <Text style={styles.hudLabel}>CIDADES</Text>
-            <Text style={styles.hudValue}>{citiesCount}</Text>
-          </View>
+        <View style={styles.hudWrapper}>
+          <BlurView intensity={30} tint='light' style={styles.glassContainer}>
+            <View style={styles.hudItem}>
+              <Text style={styles.hudLabel}>DISTÂNCIA</Text>
+              <Text style={styles.hudValue}>
+                {distanceDisplay.toFixed(1)}
+                <Text style={styles.hudUnit}>km</Text>
+              </Text>
+            </View>
+
+            <View style={styles.neonDivider}/>
+
+            <View style={styles.hudItem}>
+              <Text style={styles.hudLabel}>CIDADES</Text>
+              <Text style={styles.hudValue}>{citiesCount}</Text>
+            </View>
+          </BlurView>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -331,11 +339,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A1A1A' },
   map: { width: Dimensions.get('window').width, height: Dimensions.get('window').height },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1A1A1A' },
-  hudContainer: { position: 'absolute', top: 60, alignSelf: 'center', flexDirection: 'row', backgroundColor: '#2C3E50', borderRadius: 20, paddingVertical: 15, width: '85%', justifyContent: 'space-around', alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOpacity: 0.3 },
+  hudWrapper: { position: 'absolute', top: 60, alignSelf: 'center', width: '90%', borderRadius: 25, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(39, 174, 96, 0.3)', elevation: 10, shadowColor: '#27AE60', shadowOpacity: 0.4, shadowRadius: 15, shadowOffset: { width: 0, height: 0 }, },
+  glassContainer: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 20, borderRadius: 18, },
   hudItem: { alignItems: 'center' },
-  divider: { width: 1, height: '70%', backgroundColor: '#455A64' },
-  hudLabel: { fontSize: 10, color: '#BDC3C7', fontWeight: 'bold', letterSpacing: 1 },
-  hudValue: { fontSize: 26, fontWeight: 'bold', color: '#FFF' },
+  hudLabel: { fontSize: 10, color: '#fff', fontWeight: 'bold', letterSpacing: 2, marginBottom: 5 },
+  hudValue: { fontSize: 32, fontWeight: '900', color: '#FFF', textShadowColor: 'rgba(255, 255, 255, 0.3)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
+  hudUnit: { fontSize: 14, fontWeight: '600', },
+  neonDivider: { width: 1, height: '60%', backgroundColor: 'rgba(39, 174, 96, 0.5)', shadowColor: '#27AE60', shadowOpacity: 1, shadowRadius: 5, },
   buttonContainer: { position: 'absolute', bottom: 40, flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   mainButton: { paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, elevation: 8, flexDirection: 'row', alignItems: 'center' },
   startBtn: { backgroundColor: '#1E8449' },
