@@ -16,48 +16,17 @@ export function Routes() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoading(false)
+    });
 
-        if(error) {
-          if(
-            error.message.includes('Refresh Token Not Found') ||
-            error.message.includes('Invalid Refresh Token')
-          ) {
-            console.log('Sessão Anterior Expirada. Usuário precisa logar novamente.')
+    const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setIsLoading(false)
+    })
 
-            await supabase.auth.signOut()
-            const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
-              setSession(session)
-              setIsLoading(false)
-            })
-
-            return () => subscription.unsubscribe();
-          }
-
-          console.error('Erro crítico na sessão: ', error.message)
-        }
-
-        if (session) {
-          await supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setIsLoading(false)
-          });
-
-          const { data: { subscription }} = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-            setIsLoading(false)
-          })
-
-          return () => subscription.unsubscribe();
-        }
-      } catch (e) {
-        console.log('Erro genérico no checkSession: ', e)
-      }
-    }
-
-    checkSession();
+    return () => subscription.unsubscribe();
   }, [])
 
   if(isLoading) {
