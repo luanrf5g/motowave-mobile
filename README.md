@@ -72,10 +72,10 @@ Não salvamos apenas números. Salvamos geometria.
         <img src="./assets/print_home.png" width="250" />
       </td>
       <td>
-        <img src="./assets/print_passport.png" width="250" />
+        <img src="./assets/print_passport.PNG" width="250" />
       </td>
       <td>
-        <img src="./assets/print_history.png" width="250" />
+        <img src="./assets/print_history.PNG" width="250" />
       </td>
     </tr>
   </table>
