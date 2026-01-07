@@ -34,6 +34,9 @@ export const Home = () => {
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
+  const [lastCityCheckTime, setLastCityCheckTime] = useState<number>(0)
+  const MIN_TIME_BETWEEN_CHECKS = 5 * 60 * 1000 // 5 minutos em milissegundos
+
   const locationSubscription = useRef<Location.LocationSubscription | null>(null)
 
   const saveLocalSession = async () => {
@@ -75,13 +78,30 @@ export const Home = () => {
           await saveLocalSession()
         }
       }
-    } catch (e) {
-      console.error('Error geo: ', e)
+    } catch (e: any) {
+      const msg = e.message || ''
+
+      if(msg.includes('rate limit') || msg.includes('too many requests')) {
+        console.warn('⚠️ Cota de GPS atingida. Pausando verificação por 10min.')
+        setLastCityCheckTime(Date.now() + (10 * 60 * 1000));
+        return;
+      }
+
+      if(msg.includes('Network') || msg.includes('internet')) {
+        console.log('Sem internet para verificar a cidade. Tentaremos mais tarde.');
+        return;
+      }
+
+      console.log('Erro leve ao chegar cidade: ', msg);
     }
   }
 
   const updateLocation = (newLocation: Location.LocationObject) => {
     if (isSaving) return;
+
+    const now = Date.now()
+    const timeDiff = now - lastCityCheckTime;
+    const distDiff = tripSession.distance - tripSession.lastCityCheckCity;
 
     let newPoint: Location.LocationObjectCoords = {
       latitude: newLocation.coords.latitude,
@@ -102,9 +122,10 @@ export const Home = () => {
         tripSession.distance += dist
         tripSession.route = [...tripSession.route, newPoint]
 
-        if((tripSession.distance - tripSession.lastCityCheckCity > 2) || tripSession.cities.length === 0) {
+        if((distDiff > 3 && timeDiff > MIN_TIME_BETWEEN_CHECKS) || tripSession.cities.length === 0) {
           checkCurrentCity(newPoint)
           tripSession.lastCityCheckCity = tripSession.distance;
+          setLastCityCheckTime(now)
         }
       }
     } else {
