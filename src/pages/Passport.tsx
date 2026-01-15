@@ -11,7 +11,7 @@ import {
   Dimensions
 } from "react-native";
 import { MaterialCommunityIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient'; // <--- NOVO
 import { supabase } from "../lib/supabase";
 import { CustomHeader } from "../components/CustomHeader";
@@ -41,6 +41,8 @@ const PassportSkeleton = () => (
 );
 
 export const Passport = () => {
+  const navigation = useNavigation<any>();
+
   const [loading, setLoading] = useState(true);
   const [totalKm, setTotalKm] = useState<number | null>(null);
   const [citiesCount, setCitiesCount] = useState<number | null>(null);
@@ -191,7 +193,7 @@ export const Passport = () => {
             </View>
           </View>
 
-          <View style={styles.statCard}>
+          <TouchableOpacity activeOpacity={.6} onPress={() => navigation.navigate('Cities')} style={styles.statCard}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(41, 128, 185, 0.15)' }]}>
               <FontAwesome5 name="city" size={20} color="#3498db" />
             </View>
@@ -199,7 +201,7 @@ export const Passport = () => {
               <Text style={styles.statValue}>{citiesCount || 0}</Text>
               <Text style={styles.statLabel}>Cidades</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* GALERIA DE CONQUISTAS */}

@@ -54,8 +54,12 @@ export const TabRoutes = () => {
         options={{
           headerShown: false,
           title: 'Viagem',
-          tabBarIcon: ({focused}) => (
-            <CustomTabBarIcon focused={focused} name="map-marker-radius" />
+          tabBarIcon: ({focused, color, size}) => (
+            <MaterialCommunityIcons
+              name="map-marker-radius"
+              size={size}
+              color={focused ? '#27AE60' : '#555'}
+            />
           )
         }}
       />
@@ -65,8 +69,12 @@ export const TabRoutes = () => {
         component={Passport}
         options={{
           title: 'Comunidade',
-          tabBarIcon: ({focused}) => (
-            <CustomTabBarIcon focused={focused} name="passport" />
+          tabBarIcon: ({focused, color, size}) => (
+            <MaterialCommunityIcons
+              name="passport"
+              size={size}
+              color={focused ? '#27AE60' : '#555'}
+            />
           )
         }}
       />
@@ -76,8 +84,12 @@ export const TabRoutes = () => {
         component={History}
         options={{
           title: 'Histórico',
-          tabBarIcon: ({focused}) => (
-            <CustomTabBarIcon focused={focused} name="notebook-outline" />
+          tabBarIcon: ({focused, color, size}) => (
+            <MaterialCommunityIcons
+              name="notebook"
+              size={size}
+              color={focused ? '#27AE60' : '#555'}
+            />
           )
         }}
       />

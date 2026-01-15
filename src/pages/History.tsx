@@ -7,11 +7,9 @@ import { Alert, FlatList, StyleSheet, Text, View, ActivityIndicator, TouchableOp
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { supabase } from "../lib/supabase";
 
-// Importamos o Header Padrão
 import { CustomHeader } from '../components/CustomHeader';
 import { darkMapStyle } from "../styles/mapStyle";
 
-// Mantivemos a interface simples (lendo direto da tabela trips)
 interface Trip {
   id: string;
   created_at: string;
@@ -27,7 +25,6 @@ export const History = () => {
   const [loading, setLoading] = useState(true);
 
   const loadHistory = async () => {
-    // Só mostra loading se a lista estiver vazia (primeira carga)
     if(history.length === 0) setLoading(true);
     try {
       const { data, error } = await supabase
@@ -54,14 +51,31 @@ export const History = () => {
   const deleteTrip = async (id: string) => {
     Alert.alert("Apagar Registro", "Essa ação não pode ser desfeita.", [
       { text: "Cancelar", style: 'cancel'},
-      { text: "Apagar", style: 'destructive', onPress: async () => {
-        const { error } = await supabase.from('trips').delete().eq('id', id);
-        if (!error) {
-          loadHistory(); // Recarrega a lista
-        } else {
-          Alert.alert("Erro", "Não foi possível apagar no momento.");
+      {
+        text: "Apagar",
+        style: 'destructive',
+        onPress: async () => {
+        const { error, data } = await supabase
+          .from('trips')
+          .delete()
+          .eq('id', id)
+          .select();
+
+        if (error) {
+          Alert.alert("Erro", "Não foi possível apagar: " + error.message);
+          return;
         }
-      }}
+
+        if (data && data.length === 0) {
+          Alert.alert(
+            "Atenção",
+            "A viagem não foi apagada. Verifique se você é o dono deste registro."
+          );
+        } else {
+          loadHistory();
+        }
+      }
+      }
     ]);
   };
 
@@ -139,7 +153,7 @@ export const History = () => {
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
 
       {/* Header Padrão */}
-      <CustomHeader title="Diário de Bordo" subtitle={`${history.length} aventuras`} showNotification={false} />
+      <CustomHeader showNotification={false} />
 
       {loading && history.length === 0 ? (
           <View style={styles.centerLoading}>

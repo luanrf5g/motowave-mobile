@@ -1,15 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { Routes } from './src/routes';
-import { ThemeProvider } from 'react-native-rapi-ui'
 import { View } from 'react-native';
+import { Routes } from './src/routes';
+import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen'
+import { ThemeProvider } from 'react-native-rapi-ui'
+
+import {
+  useFonts,
+  Orbitron_400Regular,
+  Orbitron_500Medium,
+  Orbitron_700Bold
+} from '@expo-google-fonts/orbitron'
+import { useCallback } from 'react';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Orbitron_400Regular,
+    Orbitron_500Medium,
+    Orbitron_700Bold
+  })
+
+  const onLayoutRootView = useCallback(async () => {
+    if(fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded])
+
+  if(!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <ThemeProvider>
-      <StatusBar style='light' />
-      <View style={{flex: 1, backgroundColor: '#121212'}}>
-        <Routes />
-      </View>
-    </ThemeProvider>
+    <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
+      <ThemeProvider theme='dark'>
+        <StatusBar style='light' backgroundColor='#121212'/>
+          <Routes />
+      </ThemeProvider>
+    </View>
   );
 }

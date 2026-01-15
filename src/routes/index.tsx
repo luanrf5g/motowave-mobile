@@ -1,15 +1,25 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { NavigationContainer } from "@react-navigation/native";
-import { TabRoutes } from "./TabRoutes";
-import { SignUp } from '../pages/Auth/SignUp';
-import { SignIn } from '../pages/Auth/SignIn';
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { ActivityIndicator, View } from 'react-native';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+
+import { TabRoutes } from "./TabRoutes";
+import { Cities } from '../pages/Cities';
+import { supabase } from '../lib/supabase';
+import { SignUp } from '../pages/Auth/SignUp';
+import { SignIn } from '../pages/Auth/SignIn';
 import { TripDetails } from '../pages/TripDetails';
 
-const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+  SignIn: undefined,
+  SignUp: undefined,
+  TabRoutes: undefined,
+  TripDetails: undefined,
+  Cities: undefined
+}
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function Routes() {
   const [session, setSession] = useState<Session | null>(null)
@@ -45,6 +55,7 @@ export function Routes() {
           <Stack.Group>
             <Stack.Screen name="TabRoutes" component={TabRoutes}/>
             <Stack.Screen name="TripDetails" component={TripDetails} />
+            <Stack.Screen name="Cities" component={Cities}/>
           </Stack.Group>
         )
         : (

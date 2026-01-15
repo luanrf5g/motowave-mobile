@@ -201,7 +201,7 @@ export const TripDetails = () => {
 
         <Text style={styles.tripTitle}>{trip.title}</Text>
         <Text style={styles.tripDate}>
-          {format(new Date(trip.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          {format(new Date(trip.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </Text>
 
         <View style={styles.statsRow}>
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#121212',
     borderRadius: 25,
     padding: 20,
     elevation: 10,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   dragHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#ddd',
+    backgroundColor: '#777',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 15
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   tripTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333'
+    color: '#fff'
   },
   tripDate: {
     fontSize: 14,
@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginTop: 5
   },
   statLabel: {
     fontSize: 12,
-    color: '#999'
+    color: '#aaa'
   },
   divider: {
     width: 1,
@@ -315,13 +315,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#999',
+    color: '#aaa',
     marginBottom: 5,
     textTransform: 'uppercase'
   },
   cityList: {
     fontSize: 14,
-    color: '#555',
+    color: '#777',
     lineHeight: 20
   }
 });
