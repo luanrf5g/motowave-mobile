@@ -1,87 +1,26 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useCallback, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, StatusBar } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { supabase } from "../lib/supabase";
+import { StatusBar } from "expo-status-bar";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import format from "date-fns/format";
+import { ptBR } from "date-fns/locale";
 
-import { CustomHeader } from '../components/CustomHeader';
 import { darkMapStyle } from "../styles/mapStyle";
+import { CustomHeader } from "../components/CustomHeader";
 
-interface Trip {
-  id: string;
-  created_at: string;
-  total_distance: number;
-  title: string;
-  start_lat: number;
-  start_lon: number;
-}
+import { useTripHistory } from "../hooks/useTripHistory";
+import { TripHistoryItem } from "../services/tripServices";
+
+import { theme } from "../config/theme";
 
 export const History = () => {
-  const navigation = useNavigation<any>();
-  const [history, setHistory] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<any>()
+  const { history, loading, loadHistory, handleDeleteTrip} = useTripHistory()
 
-  const loadHistory = async () => {
-    if(history.length === 0) setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('id, created_at, total_distance, title, start_lat, start_lon')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      if (data) setHistory(data);
-
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadHistory();
-    }, [])
-  );
-
-  const deleteTrip = async (id: string) => {
-    Alert.alert("Apagar Registro", "Essa ação não pode ser desfeita.", [
-      { text: "Cancelar", style: 'cancel'},
-      {
-        text: "Apagar",
-        style: 'destructive',
-        onPress: async () => {
-        const { error, data } = await supabase
-          .from('trips')
-          .delete()
-          .eq('id', id)
-          .select();
-
-        if (error) {
-          Alert.alert("Erro", "Não foi possível apagar: " + error.message);
-          return;
-        }
-
-        if (data && data.length === 0) {
-          Alert.alert(
-            "Atenção",
-            "A viagem não foi apagada. Verifique se você é o dono deste registro."
-          );
-        } else {
-          loadHistory();
-        }
-      }
-      }
-    ]);
-  };
-
-  const renderCard = ({ item }: { item: Trip }) => {
-    const dateFormatted = format(new Date(item.created_at), "d MMM, yyyy", { locale: ptBR });
-    const hasStartPoint = item.start_lat !== 0 && item.start_lon !== 0;
+  const renderCard = ({item}: {item: TripHistoryItem}) => {
+    const dateFormatted = format(new Date(item.created_at), "d MMM, yyy", { locale: ptBR })
+    const hasStartPoint = item.start_lat && item.start_lon ? true : false;
 
     return (
       <TouchableOpacity
@@ -89,83 +28,95 @@ export const History = () => {
         activeOpacity={0.9}
         onPress={() => navigation.navigate('TripDetails', { tripId: item.id })}
       >
-        {/* Cabeçalho do Card: Título e Delete */}
+        {/* HEADER DO CARD */}
         <View style={styles.cardHeader}>
-           <View style={styles.titleContainer}>
-             <MaterialCommunityIcons name="map-check" size={20} color="#27AE60" style={{marginRight: 8}} />
-             <Text style={styles.cardTitle} numberOfLines={1}>{item.title || "Viagem sem nome"}</Text>
-           </View>
-           <TouchableOpacity onPress={() => deleteTrip(item.id)} style={styles.deleteBtn}>
-             <MaterialCommunityIcons name="trash-can-outline" size={22} color="#E74C3C" />
-           </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <MaterialCommunityIcons
+              name='map-check'
+              size={20}
+              color={theme.colors.primary}
+              style={{marginRight: 8}}
+            />
+            <Text style={styles.cardTitle} numberOfLines={(1)}>
+              {item.title || "Viagem sem nome"}
+            </Text>
+          </View>
+
+          <TouchableOpacity onPress={() => handleDeleteTrip(item.id)} style={styles.deleteBtn}>
+            <MaterialCommunityIcons name="trash-can-outline" size={22} color={theme.colors.danger} />
+          </TouchableOpacity>
         </View>
 
-        {/* Mapa Miniatura */}
+        {/* MAPA MINIATURA */}
         <View style={styles.mapPreviewContainer}>
           {hasStartPoint ? (
             <MapView
               provider={PROVIDER_GOOGLE}
               customMapStyle={darkMapStyle}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               initialRegion={{
-                latitude: item.start_lat,
-                longitude: item.start_lon,
-                latitudeDelta: 0.02, // Zoom mais próximo para focar no ponto
-                longitudeDelta: 0.02
+                latitude: item.start_lat!,
+                longitude: item.start_lon!,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
               }}
-              liteMode={true} // Essencial para performance em listas
+              liteMode
               zoomEnabled={false}
               pitchEnabled={false}
               scrollEnabled={false}
-              // customMapStyle={darkMapStyle} // Opcional: Se quiser o mapa dark também
             >
-               <Marker
-                coordinate={{ latitude: item.start_lat, longitude: item.start_lon }}
-                pinColor="#27AE60" // Pino verde para combinar
-               />
+              <Marker
+                coordinate={{ latitude: item.start_lat!, longitude: item.start_lon!}}
+                pinColor={theme.colors.primary}
+              />
             </MapView>
           ) : (
-              <View style={styles.noMapPlaceholder}>
-                  <MaterialCommunityIcons name="map-marker-off" size={30} color="#444" />
-                  <Text style={styles.noMapText}>Sem localização inicial</Text>
-              </View>
+            <View style={styles.noMapPlaceholder}>
+              <MaterialCommunityIcons name='map-marker-off' size={30} color={theme.colors.textMuted}/>
+              <Text>Sem localização inicial</Text>
+            </View>
           )}
         </View>
 
-        {/* Rodapé do Card: Info e Data */}
+        {/* FOOTER DO CARD */}
         <View style={styles.cardFooter}>
           <View>
             <Text style={styles.distanceValue}>
-              {item.total_distance.toFixed(1)} <Text style={styles.distanceUnit}>km</Text>
+              {item.total_distance.toFixed(1)}
+              <Text style={styles.distanceUnit}> km</Text>
             </Text>
           </View>
           <View style={styles.dateContainer}>
-             <MaterialCommunityIcons name="calendar-blank" size={14} color="#888" style={{marginRight: 4}} />
-             <Text style={styles.dateText}>{dateFormatted}</Text>
+            <MaterialCommunityIcons
+              name="calendar-blank"
+              size={14}
+              color={theme.colors.textSecondary}
+              style={{marginRight: 8}}
+            />
+            <Text style={styles.dateText}>{dateFormatted}</Text>
           </View>
         </View>
       </TouchableOpacity>
-    );
-  };
+    )
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <StatusBar style="light" backgroundColor={theme.colors.background} />
 
-      {/* Header Padrão */}
-      <CustomHeader showNotification={false} />
+      <CustomHeader showNotification={false}/>
 
       {loading && history.length === 0 ? (
-          <View style={styles.centerLoading}>
-            <ActivityIndicator size="large" color="#27AE60" />
-          </View>
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size='large' color={theme.colors.primary} />
+        </View>
       ) : history.length === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconBg}>
-             <MaterialCommunityIcons name="road-variant" size={50} color='#27AE60' />
+            <MaterialCommunityIcons name='road-variant' size={50} color={theme.colors.primary} />
           </View>
           <Text style={styles.emptyText}>Nenhuma viagem ainda.</Text>
-          <Text style={styles.emptySubtext}>Acelere e sua história aparecerá aqui.</Text>
+          <Text style={styles.emptySubtext}>Acele e sua história aparecerá aqui.</Text>
         </View>
       ) : (
         <FlatList
@@ -175,17 +126,17 @@ export const History = () => {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshing={loading}
-          onRefresh={loadHistory}
+          onRefresh={() => loadHistory(true)}
         />
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Fundo Dark
+    backgroundColor: theme.colors.background
   },
   centerLoading: {
     flex: 1,
@@ -197,13 +148,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40
   },
 
-  // --- ESTILOS DO CARD ---
+  // Card Style
   cardContainer: {
-    backgroundColor: '#1E1E1E', // Card Cinza Chumbo
-    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.sizes.radius,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2A2A2A', // Borda sutil
+    borderColor: theme.colors.border,
     overflow: 'hidden',
     elevation: 3,
   },
@@ -217,19 +168,20 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flex: 1
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    flexShrink: 1
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
+    flexShrink: 1,
+    letterSpacing: 0.5
   },
   deleteBtn: {
     padding: 5
   },
 
-  // Mapa
+  // MAPA
   mapPreviewContainer: {
     height: 130,
     marginHorizontal: 15,
@@ -237,7 +189,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#333',
-    backgroundColor: '#222' // Fundo enquanto carrega o mapa
+    backgroundColor: '#222'
   },
   noMapPlaceholder: {
     flex: 1,
@@ -246,9 +198,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#252525'
   },
   noMapText: {
-    color: '#666',
+    color: theme.colors.textMuted,
     fontSize: 12,
-    marginTop: 5
+    marginTop: 5,
+    fontFamily: theme.fonts.body
   },
 
   // Footer
@@ -260,25 +213,25 @@ const styles = StyleSheet.create({
     paddingTop: 12
   },
   distanceValue: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#27AE60', // Verde Destaque
+    fontSize: 20,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.primary,
     letterSpacing: -0.5
   },
   distanceUnit: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#27AE60'
+    fontFamily: theme.fonts.body,
+    color: theme.colors.primary
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5
+    marginBottom: 5,
   },
   dateText: {
     fontSize: 12,
-    color: '#888',
-    fontWeight: '500',
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.body,
     textTransform: 'uppercase'
   },
 
@@ -286,27 +239,28 @@ const styles = StyleSheet.create({
   emptyState: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   emptyIconBg: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#333'
+    borderColor: theme.colors.border
   },
   emptyText: {
     fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold'
+    color: theme.colors.text,
+    fontFamily: theme.fonts.title
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#888',
-    marginTop: 8
-  },
-});
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+    fontFamily: theme.fonts.title
+  }
+})
