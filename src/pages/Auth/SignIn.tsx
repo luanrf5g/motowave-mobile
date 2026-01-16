@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { AuthService } from '../../services/authService';
 import { theme } from '../../config/theme';
+import { showToast } from '../../utils/toast';
 
 export const SignIn = () => {
   const navigation = useNavigation<any>();
@@ -18,7 +19,8 @@ export const SignIn = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      return Alert.alert('Atenção', 'Preencha todos os campos');
+      showToast.info("Campos Vazios", "Por favor, preencha seu e-mail e senha.")
+      return;
     }
 
     setLoading(true);
@@ -26,7 +28,9 @@ export const SignIn = () => {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Falha no Login', error);
+      showToast.error('Acesso Negado', 'E-mail ou senha incorretos.')
+    } else {
+      showToast.success('Bem-vindo de volta!', 'Preparando o painel...')
     }
   };
 

@@ -3,6 +3,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlashList } from '@shopify/flash-list'
 import format from "date-fns/format";
 import { ptBR } from "date-fns/locale";
 
@@ -119,7 +120,7 @@ export const History = () => {
           <Text style={styles.emptySubtext}>Acele e sua história aparecerá aqui.</Text>
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={history}
           keyExtractor={item => item.id}
           renderItem={renderCard}

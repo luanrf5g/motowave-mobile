@@ -11,6 +11,8 @@ import {
   Orbitron_700Bold
 } from '@expo-google-fonts/orbitron'
 import { useCallback } from 'react';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from './src/config/toastConfig';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,7 +37,9 @@ export default function App() {
     <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
       <ThemeProvider theme='dark'>
         <StatusBar style='light' backgroundColor='#121212'/>
-          <Routes />
+        <Routes />
+
+        <Toast config={toastConfig} />
       </ThemeProvider>
     </View>
   );

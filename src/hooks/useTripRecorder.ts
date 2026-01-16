@@ -4,6 +4,7 @@ import { City } from '../services/tripServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, ToastAndroid } from 'react-native';
 import haversine from 'haversine';
+import { showToast } from '../utils/toast';
 
 const STORAGE_KEYS = {
   ROUTE: '@motowave:route',
@@ -133,9 +134,7 @@ export const useTripRecorder = () => {
           sessionRef.current.cities.push(newCity)
           setCities([...sessionRef.current.cities])
 
-          if (Platform.OS === 'android') {
-            ToastAndroid.show(`📍 ${city}`, ToastAndroid.SHORT)
-          }
+          showToast.newCity(city)
 
           await saveLocalSession();
         }

@@ -2,6 +2,7 @@ import { useCallback, useState } from "react"
 import { TripHistoryItem, TripServices } from "../services/tripServices"
 import { useFocusEffect } from "@react-navigation/native"
 import { Alert } from "react-native"
+import { showToast } from "../utils/toast"
 
 export const useTripHistory = () => {
   const [history, setHistory] = useState<TripHistoryItem[]>([])
@@ -36,7 +37,7 @@ export const useTripHistory = () => {
           if (result.success) {
             setHistory(prev => prev.filter(item => item.id !== id))
           } else {
-            Alert.alert("Erro", result.message || "Não foi possível apagar.")
+            showToast.error('Erro', result.message || 'Não foi possível apagar a viagem.')
           }
         }
       }

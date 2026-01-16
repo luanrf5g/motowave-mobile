@@ -4,6 +4,7 @@ import MapView from "react-native-maps"
 import { CityMarker, CityService } from "../services/cityService"
 import { supabase } from "../lib/supabase"
 import { Alert } from "react-native"
+import { showToast } from "../utils/toast"
 
 export const useCityMap = () => {
   const navigation = useNavigation()
@@ -37,7 +38,7 @@ export const useCityMap = () => {
         }, 800)
       }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar suas cidades conquistadas.")
+      showToast.error('Erro', 'Não foi possível carregar suas cidades conquistadas.')
     } finally {
       setLoading(false)
     }

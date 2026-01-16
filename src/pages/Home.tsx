@@ -11,6 +11,7 @@ import { darkMapStyle } from "../styles/mapStyle"
 import { BlurView } from 'expo-blur'
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { SaveTripModal } from "../components/saveTripModal"
+import { showToast } from "../utils/toast"
 
 const { width, height } = Dimensions.get('window')
 
@@ -33,7 +34,7 @@ export const Home = () => {
 
   const handleFinishPress = () => {
     if (isTracking) {
-      Alert.alert("Em movimento", "Pause o rastreamento antes de finalizar.")
+      showToast.info('Em movimento', 'Pause o rastreamente antes de finalizar.')
       return;
     }
 
@@ -56,7 +57,7 @@ export const Home = () => {
 
     if(!user) {
       setIsSaving(false)
-      Alert.alert("Erro", "Você precisa estar logado.");
+      showToast.error('Erro', 'Você precisa estar logado.')
       return supabase.auth.signOut()
     }
 
@@ -68,7 +69,7 @@ export const Home = () => {
     if (success) {
       setShowSaveModal(false)
       resetTrip();
-      Alert.alert("Sucesso!", "Sua aventura foi salva no passaporte.")
+      showToast.success('Sucesso!', 'Sua aventura foi salva no passaporte.')
     }
   }
 

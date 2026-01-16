@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { Alert } from "react-native";
+import { showToast } from "../utils/toast";
 
 // tipagem do corpo das cidades
 export interface City {
@@ -201,7 +202,7 @@ export const TripServices = {
         msg = "Internet instável. Verifique sua conexao."
       }
 
-      Alert.alert("Erro no envio", msg);
+      showToast.error('Erro no envio', msg)
       return false;
     }
   },

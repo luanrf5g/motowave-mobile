@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { TripFullDetail, TripServices } from "../services/tripServices";
 import MapView from "react-native-maps";
 import { Alert } from "react-native";
+import { showToast } from "../utils/toast";
 
 export const useTripDetails = () => {
   const route = useRoute()
@@ -31,7 +32,7 @@ export const useTripDetails = () => {
         }
       }, 500)
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar os detalhes")
+      showToast.error('Erro', 'Não foi possível carregar os Detalhes.')
       navigation.goBack()
     } finally {
       setLoading(false)

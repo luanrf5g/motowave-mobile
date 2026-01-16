@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { AuthService } from '../../services/authService';
 import { theme } from '../../config/theme';
+import { showToast } from '../../utils/toast';
 
 export const SignUp = () => {
   const navigation = useNavigation();
@@ -19,7 +20,8 @@ export const SignUp = () => {
 
   const handleSignUp = async () => {
     if (!email || !password || !username) {
-      return Alert.alert("Erro", "Preencha todos os campos");
+      showToast.info('Campos Vazios', 'preencha todos os campos para continuar.')
+      return;
     }
 
     setLoading(true);
@@ -27,12 +29,12 @@ export const SignUp = () => {
     setLoading(false);
 
     if (error) {
-      Alert.alert("Erro ao cadastrar", error);
+      showToast.error('Acesso Negado', 'Erro ao tentar se cadastrar.')
       return;
     }
 
     if (user) {
-      Alert.alert("Bem-vindo!", "Conta criada com sucesso. Faça login para começar.");
+      showToast.success('Bem-vindo!', 'Conta criada com sucesso. Faça login para começar.')
       navigation.goBack();
     }
   };
