@@ -1,44 +1,33 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  StatusBar
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase } from '../../lib/supabase'; // Ajuste o caminho
 import { useNavigation } from '@react-navigation/native';
+
+import { AuthService } from '../../services/authService';
+import { theme } from '../../config/theme';
 
 export const SignIn = () => {
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erro', 'Preencha todos os campos');
-      return;
+      return Alert.alert('Atenção', 'Preencha todos os campos');
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await AuthService.signIn({ email, password });
     setLoading(false);
 
     if (error) {
-      Alert.alert('Falha no Login', error.message);
+      Alert.alert('Falha no Login', error);
     }
-    // O AuthStateListener no App.tsx deve redirecionar automaticamente
   };
 
   return (
@@ -46,27 +35,24 @@ export const SignIn = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
 
-      {/* HEADER / LOGO */}
       <View style={styles.header}>
         <View style={styles.logoCircle}>
-          <MaterialCommunityIcons name="bike-fast" size={50} color="#27AE60" />
+          <MaterialCommunityIcons name="bike-fast" size={50} color={theme.colors.primary} />
         </View>
         <Text style={styles.title}>MotoWave</Text>
         <Text style={styles.subtitle}>Seu diário de bordo inteligente</Text>
       </View>
 
-      {/* FORMULÁRIO */}
       <View style={styles.form}>
 
-        {/* Input Email */}
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="email-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Seu e-mail"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -74,19 +60,22 @@ export const SignIn = () => {
           />
         </View>
 
-        {/* Input Senha */}
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="lock-outline" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="lock-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Sua senha"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.colors.textMuted}
             secureTextEntry={!visible}
             value={password}
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setVisible(!visible)} style={{ paddingRight: 15 }}>
-            <MaterialCommunityIcons name={visible ? "eye-outline" : "eye-off-outline"} size={20} color="#666" />
+            <MaterialCommunityIcons
+              name={visible ? "eye-outline" : "eye-off-outline"}
+              size={20}
+              color={theme.colors.textMuted}
+            />
           </TouchableOpacity>
         </View>
 
@@ -94,6 +83,7 @@ export const SignIn = () => {
           style={styles.loginButton}
           onPress={handleLogin}
           disabled={loading}
+          activeOpacity={0.8}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -118,7 +108,7 @@ export const SignIn = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     padding: 20,
   },
@@ -130,27 +120,28 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#27AE60',
-    // Glow effect
+    borderColor: theme.colors.primary,
     elevation: 10,
-    shadowColor: '#27AE60',
+    shadowColor: theme.colors.primary,
     shadowOpacity: 0.3,
     shadowRadius: 20,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 1,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
+    letterSpacing: 2,
+    textTransform: 'uppercase'
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
+    fontFamily: theme.fonts.body,
+    color: theme.colors.textSecondary,
     marginTop: 5,
   },
   form: {
@@ -159,11 +150,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: theme.colors.border,
     height: 55,
   },
   inputIcon: {
@@ -172,26 +163,26 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: theme.colors.text,
     fontSize: 16,
     height: '100%',
   },
   loginButton: {
-    backgroundColor: '#27AE60',
+    backgroundColor: theme.colors.primary,
     height: 55,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     elevation: 5,
-    shadowColor: '#27AE60',
+    shadowColor: theme.colors.primary,
     shadowOpacity: 0.4,
     shadowRadius: 10,
   },
   loginButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: theme.fonts.title,
     letterSpacing: 1,
   },
   registerLink: {
@@ -199,11 +190,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerText: {
-    color: '#888',
+    color: theme.colors.textMuted,
     fontSize: 14,
   },
   registerHighlight: {
-    color: '#27AE60',
-    fontWeight: 'bold',
+    color: theme.colors.primary,
+    fontWeight: 'bold'
   }
 });

@@ -1,72 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
-import { darkMapStyle } from '../styles/mapStyle'; // Seu estilo dark
-import { CustomHeader } from '../components/CustomHeader'; // Seu header padrão
-
-interface CityMarker {
-  city_name: string;
-  state: string,
-  lat: number;
-  lon: number;
-}
+import { StatusBar } from "expo-status-bar"
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { useCityMap } from "../hooks/useCityMap"
+import { theme } from "../config/theme"
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps"
+import { darkMapStyle } from "../styles/mapStyle"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 export const Cities = () => {
-  const navigation = useNavigation();
-  const mapRef = useRef<MapView>(null);
-  const [cities, setCities] = useState<CityMarker[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchCities();
-  }, []);
-
-  const fetchCities = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        // Chamada da RPC simplificada
-        const { data, error } = await supabase
-          .rpc('get_user_visited_cities', { target_user_id: user.id });
-
-        if (error) throw error;
-
-        if (data) {
-          setCities(data);
-
-          // Efeito de zoom automático para mostrar todos os marcadores
-          if (data.length > 0 && mapRef.current) {
-            setTimeout(() => {
-              const coords = data.map((c: any) => ({
-                latitude: c.lat,
-                longitude: c.lon
-              }));
-
-              mapRef.current?.fitToCoordinates(coords, {
-                edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-                animated: true
-              });
-            }, 500);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao buscar cidades:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { cities, loading, mapRef, navigation } = useCityMap()
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" backgroundColor="transparent" translucent />
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#27AE60" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Carregando mapa de conquistas...</Text>
         </View>
       ) : (
         <MapView
@@ -75,61 +25,108 @@ export const Cities = () => {
           style={styles.map}
           customMapStyle={darkMapStyle}
           initialRegion={{
-            latitude: -14.2350, // Centro do Brasil (fallback)
+            latitude: -14.2350,
             longitude: -51.9253,
-            latitudeDelta: 20,
-            longitudeDelta: 20,
+            latitudeDelta: 25,
+            longitudeDelta: 25,
           }}
         >
           {cities.map((city, index) => (
             <Marker
               key={index}
               coordinate={{ latitude: city.lat, longitude: city.lon }}
-              title={`${city.city_name} - ${city.state}`}
+              title={city.city_name}
+              description={city.state}
             >
-              {/* Marcador Customizado */}
               <View style={styles.markerContainer}>
-                <MaterialCommunityIcons name="map-marker-star" size={32} color="#27ae60" />
+                <MaterialCommunityIcons
+                  name="map-marker-star"
+                  size={32}
+                  color={theme.colors.primary}
+                />
               </View>
             </Marker>
           ))}
         </MapView>
       )}
 
-      {/* Botão Flutuante de Voltar (Opcional se já tiver header com back) */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
+        <MaterialCommunityIcons name="arrow-left" size={24} color='#fff' />
       </TouchableOpacity>
+
+      {!loading && (
+        <View style={styles.counterBadge}>
+          <MaterialCommunityIcons name="city-variant-outline" size={16} color={theme.colors.primary} />
+          <Text style={styles.counterText}>
+            {cities.length} {cities.length === 1 ? 'Cidade' : 'Cidades'}
+          </Text>
+        </View>
+      )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: theme.colors.background,
+  },
+  loadingText: {
+    marginTop: 15,
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.body
   },
   map: {
     flex: 1,
   },
+
+  // Marcador
   markerContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // Botão Voltar
   backButton: {
     position: 'absolute',
-    bottom: 30,
+    top: 50,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 15,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 12,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#333'
+    borderColor: theme.colors.border,
+    zIndex: 10
+  },
+
+  // Badge Contador
+  counterBadge: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    elevation: 5,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  counterText: {
+    color: '#FFF',
+    fontFamily: theme.fonts.title,
+    marginLeft: 8,
+    fontSize: 14
   }
 });

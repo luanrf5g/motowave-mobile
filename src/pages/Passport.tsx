@@ -1,251 +1,165 @@
-import React, { useState, useCallback } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  RefreshControl,
-  Image,
-  Dimensions
-} from "react-native";
-import { MaterialCommunityIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { LinearGradient } from 'expo-linear-gradient'; // <--- NOVO
-import { supabase } from "../lib/supabase";
+import { useNavigation } from "@react-navigation/native"
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { usePassport } from "../hooks/usePassport"
+import { theme } from "../config/theme";
+import { PassportSkeleton } from "../components/PassportSkeleton"
+import { StatusBar } from "expo-status-bar";
 import { CustomHeader } from "../components/CustomHeader";
-
-// --- SISTEMA DE NÍVEIS (Mantido) ---
-const LEVEL_SYSTEM = [
-  { level: 1, title: "Garagem", minKm: 0, color: "#7f8c8d" }, // Cinza
-  { level: 2, title: "Primeira Marcha", minKm: 50, color: "#cd7f32" }, // Bronze
-  { level: 3, title: "Rodageiro", minKm: 200, color: "#bdc3c7" },      // Prata
-  { level: 4, title: "Capitão de Estrada", minKm: 1000, color: "#f1c40f" }, // Ouro
-  { level: 5, title: "Lenda do Asfalto", minKm: 5000, color: "#9b59b6" },  // Diamante
-];
-
-// --- SKELETON DARK (Atualizado para o tema escuro) ---
-const PassportSkeleton = () => (
-  <View style={[styles.container, { paddingTop: 60 }]}>
-    <View style={{ alignItems: 'center', marginBottom: 30 }}>
-      <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: '#333', marginBottom: 15 }} />
-      <View style={{ width: 180, height: 28, backgroundColor: '#333', borderRadius: 6, marginBottom: 10 }} />
-      <View style={{ width: 120, height: 24, backgroundColor: '#333', borderRadius: 12 }} />
-    </View>
-    <View style={styles.statsContainer}>
-      <View style={[styles.statCard, { backgroundColor: '#1E1E1E' }]} />
-      <View style={[styles.statCard, { backgroundColor: '#1E1E1E' }]} />
-    </View>
-  </View>
-);
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient'
 
 export const Passport = () => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<any>()
 
-  const [loading, setLoading] = useState(true);
-  const [totalKm, setTotalKm] = useState<number | null>(null);
-  const [citiesCount, setCitiesCount] = useState<number | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const {
+    loading, username, totalKm, citiesCount,
+    currentLevel, nextLevel, progress,
+    loadStats, handleSignOut
+  } = usePassport()
 
-  const [currentLevel, setCurrentLevel] = useState(LEVEL_SYSTEM[0]);
-  const [nextLevel, setNextLevel] = useState(LEVEL_SYSTEM[1]);
-  const [progress, setProgress] = useState(0);
-
-  // --- LÓGICA DE CÁLCULO E LOAD (MANTIDA IGUAL) ---
-  const calculateLevel = (km: number) => {
-    let level = LEVEL_SYSTEM[0];
-    let next = LEVEL_SYSTEM[1];
-
-    for (let i = 0; i < LEVEL_SYSTEM.length; i++) {
-      if (km >= LEVEL_SYSTEM[i].minKm) {
-        level = LEVEL_SYSTEM[i];
-        next = LEVEL_SYSTEM[i + 1] || { minKm: 999999, title: "Lenda Viva", color: "#fff", level: 99 };
-      }
-    }
-    setCurrentLevel(level);
-    setNextLevel(next);
-
-    if (next.minKm < 999999) {
-      const range = next.minKm - level.minKm;
-      const currentInRange = km - level.minKm;
-      const percent = currentInRange / range;
-      setProgress(percent > 1 ? 1 : percent);
-    } else {
-      setProgress(1);
-    }
-  };
-
-  const loadStats = async () => {
-    if (totalKm === null) setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('total_km, username')
-        .eq('id', user.id)
-        .single();
-
-      const { data: citiesData } = await supabase
-        .from('visited_cities')
-        .select('city_name')
-        .eq('user_id', user.id);
-
-      if (profile) {
-        setUsername(profile.username || "Viajante");
-        setTotalKm(profile.total_km || 0);
-        calculateLevel(profile.total_km || 0);
-      }
-
-      if (citiesData) {
-        const uniqueCities = new Set(citiesData.map(c => c.city_name.trim().toUpperCase()));
-        setCitiesCount(uniqueCities.size);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadStats();
-    }, [])
-  );
-
-  const handleSignOut = async () => {
-    Alert.alert("Desconectar", "Tem certeza que deseja sair?", [
-        { text: "Ficar", style: "cancel" },
-        { text: "Sair", style: "destructive", onPress: () => supabase.auth.signOut() }
-    ]);
-  };
-
-  if (loading && totalKm === null) return <PassportSkeleton />;
+  if (loading && totalKm === 0) return <PassportSkeleton />
 
   return (
     <View style={styles.container}>
-      <CustomHeader showNotification/>
+      <StatusBar style="light" backgroundColor="#121212" translucent />
+      <CustomHeader showNotification />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadStats} tintColor="#27AE60" />}
+        contentContainerStyle={{paddingBottom: 40}}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={loadStats}
+            tintColor={theme.colors.primary}
+          />
+        }
       >
-        {/* HEADER DE PERFIL */}
+        {/* Header do Perfil */}
         <View style={styles.header}>
-          {/* Botão de Config/Logout no topo direito */}
           <TouchableOpacity onPress={handleSignOut} style={styles.configBtn}>
-             <Ionicons name="power" size={24} color="#aaa" />
+            <Ionicons name="power" size={24} color={theme.colors.textMuted} />
           </TouchableOpacity>
 
-          {/* Avatar com Borda de Progresso Visual */}
           <View style={styles.avatarWrapper}>
             <LinearGradient
-              colors={[currentLevel.color, '#2C3E50']}
+              colors={[currentLevel.color, theme.colors.surface]}
               style={styles.avatarBorder}
             >
               <View style={styles.avatarContainer}>
-                 <MaterialCommunityIcons name="account" size={60} color="#fff" />
+                <MaterialCommunityIcons name="account" size={60} color="#fff" />
               </View>
             </LinearGradient>
-            {/* Badge de Nível Flutuante */}
-            <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
-               <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
-            </View>
-          </View>
 
-          <Text style={styles.username}>{username}</Text>
-          <Text style={styles.userTitle}>{currentLevel.title}</Text>
+            <View style={[styles.levelBadge, { backgroundColor: currentLevel.color}]}>
+              <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
+            </View>
+
+          </View>
+            <Text style={styles.username}>{username}</Text>
+            <Text style={styles.userTitle}>{currentLevel.title}</Text>
         </View>
 
-        {/* BARRA DE XP (Nível) */}
+        {/* Barra de XP */}
         <View style={styles.xpContainer}>
           <View style={styles.xpHeader}>
             <Text style={styles.xpText}>Nível {currentLevel.level}</Text>
             <Text style={styles.xpText}>
-              {(totalKm || 0).toFixed(1)} / {nextLevel.minKm} km
+              {totalKm.toFixed(1)} / {nextLevel.minKm} km
             </Text>
           </View>
           <View style={styles.xpBarBg}>
             <LinearGradient
-              colors={[currentLevel.color, '#27AE60']} // Gradiente da cor do nível para verde
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+              colors={[currentLevel.color, theme.colors.primary]}
+              start={{ x: 0, y: 0}}
+              end={{ x: 1, y: 0}}
               style={[styles.xpBarFill, { width: `${progress * 100}%` }]}
             />
           </View>
           <Text style={styles.xpNextText}>
-            Faltam {(nextLevel.minKm - (totalKm || 0)).toFixed(1)} km para {nextLevel.title}
+            Faltam {(nextLevel.minKm - totalKm).toFixed(1)} km para {nextLevel.title}
           </Text>
         </View>
 
-        {/* ESTATÍSTICAS (Cards Pretos) */}
+        {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(39, 174, 96, 0.15)' }]}>
-              <MaterialCommunityIcons name="map-marker-distance" size={24} color="#27AE60" />
+            <View style={[styles.iconBox, {backgroundColor: theme.colors.primaryTranslucent}]}>
+              <MaterialCommunityIcons name="map-marker-distance" size={24} color={theme.colors.primary} />
             </View>
             <View>
-              <Text style={styles.statValue}>{(totalKm || 0).toFixed(1)}</Text>
+              <Text style={styles.statValue}>{totalKm.toFixed(1)}</Text>
               <Text style={styles.statLabel}>KM Rodados</Text>
             </View>
           </View>
 
-          <TouchableOpacity activeOpacity={.6} onPress={() => navigation.navigate('Cities')} style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(41, 128, 185, 0.15)' }]}>
-              <FontAwesome5 name="city" size={20} color="#3498db" />
+          <TouchableOpacity
+            activeOpacity={0.6}
+            onPress={() => navigation.navigate('Cities')}
+            style={styles.statCard}
+          >
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.15)' }]}>
+              <FontAwesome5 name="city" size={20} color={theme.colors.info}/>
             </View>
             <View>
-              <Text style={styles.statValue}>{citiesCount || 0}</Text>
+              <Text style={styles.statValue}>{citiesCount}</Text>
               <Text style={styles.statLabel}>Cidades</Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* GALERIA DE CONQUISTAS */}
+        {/* Galeria de Conquistas */}
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Conquistas</Text>
-            <Text style={styles.seeAllText}>Ver todas</Text>
+            {/* <Text style={styles.seeAllText}>Ver Todas</Text> */}
           </View>
 
-          {/* Badge 1: Primeira Viagem */}
           <View style={styles.badgeRow}>
-            <View style={[styles.badgeItem, (totalKm || 0) > 0 ? styles.badgeUnlocked : styles.badgeLocked]}>
-               <MaterialCommunityIcons name="flag-checkered" size={28} color={(totalKm || 0) > 0 ? "#f1c40f" : "#555"} />
-               <Text style={styles.badgeLabel}>Start</Text>
+            {/* Badge 1: Start */}
+            <View style={[styles.badgeItem, totalKm > 0 ? styles.badgeUnlocked : styles.badgeLocked]}>
+              <MaterialCommunityIcons
+                name="flag-checkered"
+                size={28}
+                color={totalKm > 0 ? '#f1c40f' : '#555'}
+              />
+              <Text style={styles.badgeLabel}>Start</Text>
             </View>
 
-            {/* Badge 2: Explorador (5 Cidades) */}
-            <View style={[styles.badgeItem, (citiesCount || 0) >= 5 ? styles.badgeUnlocked : styles.badgeLocked]}>
-               <MaterialCommunityIcons name="compass-outline" size={28} color={(citiesCount || 0) >= 5 ? "#3498db" : "#555"} />
-               <Text style={styles.badgeLabel}>Explorador</Text>
+            {/* Badge 2: Explorador */}
+            <View style={[styles.badgeItem, citiesCount >= 5 ? styles.badgeUnlocked : styles.badgeLocked]}>
+              <MaterialCommunityIcons
+                name="flag-checkered"
+                size={28}
+                color={citiesCount >= 5 ? theme.colors.info : '#555'}
+              />
+              <Text style={styles.badgeLabel}>Explorador</Text>
             </View>
 
-            {/* Badge 3: Iron Butt (500km) - Exemplo */}
-            <View style={[styles.badgeItem, (totalKm || 0) >= 500 ? styles.badgeUnlocked : styles.badgeLocked]}>
-               <MaterialCommunityIcons name="trophy-outline" size={28} color={(totalKm || 0) >= 500 ? "#9b59b6" : "#555"} />
-               <Text style={styles.badgeLabel}>Iron Butt</Text>
+            {/* Badge 3: Iron Butt */}
+            <View style={[styles.badgeItem, totalKm >= 500 ? styles.badgeUnlocked : styles.badgeLocked]}>
+              <MaterialCommunityIcons
+                name="flag-checkered"
+                size={28}
+                color={totalKm >= 500 ? '#9b59b6' : '#555'}
+              />
+              <Text style={styles.badgeLabel}>Iron Butt</Text>
             </View>
           </View>
         </View>
-
       </ScrollView>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Fundo Dark Profundo
+    backgroundColor: theme.colors.background
   },
   header: {
     alignItems: 'center',
-    paddingTop: 24, // Espaço para Status Bar
-    paddingBottom: 30,
+    paddingTop: 24,
+    paddingBottom: 30
   },
   configBtn: {
     position: 'absolute',
@@ -254,26 +168,23 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 5
   },
-
-  // Avatar Styles
   avatarWrapper: {
-    marginBottom: 15,
-    position: 'relative',
+    marginBottom: 15
   },
   avatarBorder: {
     width: 110,
     height: 110,
     borderRadius: 55,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   avatarContainer: {
     width: 102,
     height: 102,
     borderRadius: 51,
-    backgroundColor: '#1A1A1A', // Fundo do avatar para separar da borda
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   levelBadge: {
     position: 'absolute',
@@ -285,44 +196,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#121212', // Borda da cor do fundo para "cortar" o avatar
+    borderColor: theme.colors.background
   },
   levelBadgeText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: theme.fonts.title,
     fontSize: 14,
   },
 
-  // Texto Header
   username: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
     marginBottom: 5,
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
   },
   userTitle: {
     fontSize: 14,
-    color: '#27AE60', // Verde destaque
+    fontFamily: theme.fonts.subtitle,
+    color: theme.colors.primary,
     textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 1
+    letterSpacing: 1,
   },
 
-  // Barra de XP
   xpContainer: {
     marginHorizontal: 20,
     marginBottom: 30,
   },
+
   xpHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+
   xpText: {
-    color: '#aaa',
+    color: theme.colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: theme.fonts.title,
   },
   xpBarBg: {
     height: 8,
@@ -335,28 +246,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   xpNextText: {
-    color: '#666',
+    color: theme.colors.textMuted,
     fontSize: 11,
     marginTop: 8,
     textAlign: 'center',
+    fontFamily: theme.fonts.title
   },
 
-  // Grid Stats
   statsContainer: {
     flexDirection: 'row',
-    gap: 15, // Gap funciona nas versões novas do RN. Se der erro, use margin
     marginHorizontal: 20,
     marginBottom: 30,
+    justifyContent: 'space-between'
   },
   statCard: {
-    flex: 1,
-    backgroundColor: '#1E1E1E',
+    flex: 0.48,
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: theme.colors.border
   },
   iconBox: {
     width: 44,
@@ -368,15 +279,15 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
   },
   statLabel: {
     fontSize: 12,
-    color: '#888',
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.title
   },
 
-  // Conquistas
   section: {
     marginHorizontal: 20,
   },
@@ -388,28 +299,24 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  seeAllText: {
-    color: '#27AE60',
-    fontSize: 14,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text
   },
   badgeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   badgeItem: {
     width: '30%',
-    aspectRatio: 1, // Quadrado
+    aspectRatio: 1,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
   },
   badgeUnlocked: {
-    backgroundColor: '#1E1E1E',
-    borderColor: '#333',
+    backgroundColor: theme.colors.surface,
+    borderColor: '#333'
   },
   badgeLocked: {
     backgroundColor: '#181818',
@@ -417,9 +324,9 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   badgeLabel: {
-    color: '#aaa',
+    color: theme.colors.textSecondary,
     fontSize: 10,
     marginTop: 8,
-    fontWeight: '500'
+    fontFamily: theme.fonts.subtitle
   }
-});
+})

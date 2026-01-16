@@ -1,155 +1,31 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  Dimensions,
-  Alert
-} from 'react-native';
-import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { supabase } from '../lib/supabase';
-import { darkMapStyle } from '../styles/mapStyle';
+import React from "react"
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native"
+import { StatusBar } from "expo-status-bar"
+import MapView, {Polyline, Marker, PROVIDER_GOOGLE} from "react-native-maps"
+import { MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
-// --- TIPAGEM ---
-interface City {
-  city_name: string;
-  location: string; // Vem como "POINT(-46 -23)"
-}
-
-interface TripFullDetail {
-  id: string;
-  title: string;
-  total_distance: number;
-  created_at: string;
-  route_coords: { latitude: number; longitude: number }[];
-  cities: { name: string; latitude: number; longitude: number }[];
-}
-
-interface TripReturnProps {
-  id: string,
-  title: string,
-  total_distance: number,
-  created_at: string,
-  route_wkt: string,
-  cities_data: {
-    name: string,
-    location_wkt: string,
-  }[]
-}
-
-// --- PARSERS WKT (PostGIS -> React Native) ---
-
-// Converte "LINESTRING(-46 -23, -47 -24)" para Array de coords
-const parseLineString = (wkt: string) => {
-  if (!wkt) return [];
-  const content = wkt.replace('LINESTRING(', '').replace(')', '');
-  const points = content.split(',');
-
-  return points.map(p => {
-    const [lon, lat] = p.trim().split(' ');
-    return {
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon),
-    };
-  });
-};
-
-// Converte "POINT(-46 -23)" para Objeto coord
-const parsePoint = (wkt: string) => {
-  if (!wkt) return { latitude: 0, longitude: 0 };
-  const content = wkt.replace('POINT(', '').replace(')', '');
-  const [lon, lat] = content.trim().split(' ');
-  return {
-    latitude: parseFloat(lat),
-    longitude: parseFloat(lon),
-  };
-};
+import { useTripDetails } from "../hooks/useTripDetails"
+import { darkMapStyle } from "../styles/mapStyle"
+import { theme } from "../config/theme"
 
 export const TripDetails = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { tripId } = route.params as { tripId: string }; // Recebe o ID da tela anterior
+  const { trip, loading, mapRef, navigation } = useTripDetails()
 
-  const [trip, setTrip] = useState<TripFullDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const mapRef = useRef<MapView>(null);
-
-  useEffect(() => {
-    fetchTripDetails();
-  }, []);
-
-  const fetchTripDetails = async () => {
-    try {
-      // Busca JOIN: Viagem + Rota + Cidades
-      const { data: rpcData, error } = await supabase
-        .rpc('get_trip_details', { target_id: tripId })
-        .single();
-
-      if (error) throw error;
-
-      const data = rpcData as TripReturnProps;
-
-      // Processamento dos dados
-      const rawRoute = data.route_wkt; // Pega a string LINESTRING
-      const rawCities = data.cities_data || [];
-
-      const parsedRoute = rawRoute ? parseLineString(rawRoute) : [];
-
-      const parsedCities = rawCities.map((c: any) => {
-        const coords = parsePoint(c.location_wkt);
-        return {
-          name: c.name,
-          latitude: coords.latitude,
-          longitude: coords.longitude
-        };
-      });
-
-      setTrip({
-        id: data.id,
-        title: data.title || "Viagem sem título",
-        total_distance: data.total_distance,
-        created_at: data.created_at,
-        route_coords: parsedRoute,
-        cities: parsedCities
-      });
-
-      // Efeito visual: Focar o mapa na rota assim que carregar
-      setTimeout(() => {
-        if (mapRef.current && parsedRoute.length > 0) {
-          mapRef.current.fitToCoordinates(parsedRoute, {
-            edgePadding: { top: 100, right: 50, bottom: 200, left: 50 },
-            animated: true,
-          });
-        }
-      }, 500);
-
-    } catch (e) {
-      console.error(e);
-      Alert.alert("Erro", "Não foi possível carregar os detalhes.");
-      navigation.goBack();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading || !trip) {
+  if(loading || !trip) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#27AE60" />
-        <Text style={{ marginTop: 10, color: '#fff' }}>Carregando mapa...</Text>
+        <ActivityIndicator size='large' color={theme.colors.primary}/>
+        <Text style={styles.loadingText}>Carregando telemetria...</Text>
       </View>
-    );
+    )
   }
 
   return (
     <View style={styles.container}>
-      {/* MAPA FUNDO */}
+      <StatusBar style="light" backgroundColor="transparent" translucent />
+
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
@@ -158,170 +34,254 @@ export const TripDetails = () => {
         initialRegion={{
           latitude: trip.route_coords[0]?.latitude || -23.55,
           longitude: trip.route_coords[0]?.longitude || -46.63,
-          latitudeDelta: 0.001,
-          longitudeDelta: 0.001,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05
         }}
       >
-        {/* A Linha da Rota */}
         <Polyline
           coordinates={trip.route_coords}
-          strokeColor="#e74c3c" // Vermelho destaque
+          strokeColor={theme.colors.primary}
           strokeWidth={4}
+          lineDashPattern={[0]}
         />
 
-        {/* Marcador de Início */}
         {trip.route_coords.length > 0 && (
-           <Marker coordinate={trip.route_coords[0]} title="Início">
-              <MaterialCommunityIcons name="flag" size={30} color="#27AE60" />
-           </Marker>
+          <Marker coordinate={trip.route_coords[0]} title="Início">
+            <MaterialCommunityIcons name="flag-variant" size={30} color={theme.colors.primary} />
+          </Marker>
         )}
 
-        {/* Marcadores das Cidades */}
         {trip.cities.map((city, index) => (
           <Marker
             key={index}
-            coordinate={{ latitude: city.latitude, longitude: city.longitude }}
+            coordinate={{ latitude: city.latitude, longitude: city.longitude}}
             title={city.name}
           >
             <View style={styles.cityMarker}>
-               <FontAwesome5 name="city" size={12} color="#fff" />
+              <FontAwesome5 name="city" size={10} color="#fff" />
             </View>
           </Marker>
         ))}
       </MapView>
 
-      {/* BOTÃO VOLTAR FLUTUANTE */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <MaterialCommunityIcons name="arrow-left" size={24} color="#333" />
+        <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* CARD DE INFORMAÇÕES (BOTTOM SHEET SIMULADO) */}
       <View style={styles.infoCard}>
-        <View style={styles.dragHandle} />
+        <View style={styles.dragHandle}/>
 
-        <Text style={styles.tripTitle}>{trip.title}</Text>
-        <Text style={styles.tripDate}>
-          {format(new Date(trip.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={{flex: 1}}>
+            <Text style={styles.tripTitle} numberOfLines={1}>{trip.title}</Text>
+            <Text style={styles.tripDate}>
+              {format(new Date(trip.created_at), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+            </Text>
+          </View>
+          <View style={styles.idBadge}>
+            <Text style={styles.idText}>ID: {trip.cities.length > 0 ? 'EXP' : 'RIDE'}</Text>
+          </View>
+        </View>
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <MaterialCommunityIcons name="map-marker-distance" size={24} color="#27AE60" />
-            <Text style={styles.statValue}>{trip.total_distance.toFixed(1)} km</Text>
-            <Text style={styles.statLabel}>Total Percorrido</Text>
+            <View style={[styles.iconBox, { backgroundColor: theme.colors.primaryTranslucent }]}>
+              <MaterialCommunityIcons name="map-marker-distance" size={20} color={theme.colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.statValue}>
+                {trip.total_distance.toFixed(1)}
+                <Text style={styles.statUnit}> km</Text>
+              </Text>
+              <Text style={styles.statLabel}>
+                Distância
+              </Text>
+            </View>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.statItem}>
-            <FontAwesome5 name="map-marked-alt" size={20} color="#2980b9" />
-            <Text style={styles.statValue}>{trip.cities.length}</Text>
-            <Text style={styles.statLabel}>Cidades Visitadas</Text>
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
+              <FontAwesome5 name="map-marked-alt" size={16} color={theme.colors.info} />
+            </View>
+            <View>
+              <Text style={styles.statValue}>{trip.cities.length}</Text>
+              <Text style={styles.statLabel}>Cidades</Text>
+            </View>
           </View>
         </View>
 
-        {/* Lista de cidades (Horizontal) se houver espaço */}
         {trip.cities.length > 0 && (
-           <View style={{marginTop: 20}}>
-              <Text style={styles.sectionHeader}>Roteiro:</Text>
-              <Text style={styles.cityList}>
-                {trip.cities.map(c => c.name).join(' • ')}
-              </Text>
-           </View>
+          <View style={styles.routeSection}>
+            <Text style={styles.sectionHeader}>ROTEIRO DE CIDADES</Text>
+            <Text style={styles.cityList}>
+              {trip.cities.map(c => c.name).join('  •  ')}
+            </Text>
+          </View>
         )}
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A1A1A' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1A1A1A' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background
+  },
+  loadingText: {
+    color: theme.colors.textMuted,
+    marginTop: 10,
+    fontFamily: theme.fonts.body
+  },
 
+  // Mapa Styles
+  cityMarker: {
+    backgroundColor: theme.colors.info,
+    padding: 6,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#fff',
+    elevation: 4
+  },
+
+  // UI Flutuante
   backButton: {
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 20,
-    elevation: 5,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 12,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     zIndex: 10
   },
 
-  cityMarker: {
-    backgroundColor: '#2980b9',
-    padding: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fff'
-  },
-
+  // Card Inferior
   infoCard: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: '#121212',
-    borderRadius: 25,
+    left: 15,
+    right: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 24,
     padding: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     elevation: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.5,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
   },
   dragHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#777',
+    backgroundColor: '#333',
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: 15
+    marginBottom: 20,
+    opacity: 0.5
   },
-  tripTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff'
-  },
-  tripDate: {
-    fontSize: 14,
-    color: '#777',
+
+  // Header do Card
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 20
   },
+  tripTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
+    marginBottom: 4,
+    letterSpacing: 0.5
+  },
+  tripDate: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.body,
+    textTransform: 'uppercase'
+  },
+  idBadge: {
+    backgroundColor: '#333',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6
+  },
+  idText: {
+    color: '#aaa',
+    fontSize: 10,
+    fontFamily: theme.fonts.title
+  },
+
+  // Stats
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center'
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#181818',
+    borderRadius: 16,
+    padding: 15,
   },
   statItem: {
-    alignItems: 'center'
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 5
+    fontSize: 18,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
+  },
+  statUnit: {
+    fontSize: 12,
+    color: theme.colors.primary,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#aaa'
+    fontSize: 10,
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.body,
+    marginTop: 2
   },
   divider: {
     width: 1,
-    height: 40,
-    backgroundColor: '#eee'
+    height: 30,
+    backgroundColor: '#333',
+    marginHorizontal: 15
+  },
+
+  // Lista de Cidades
+  routeSection: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2A2A',
+    paddingTop: 15
   },
   sectionHeader: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#aaa',
-    marginBottom: 5,
-    textTransform: 'uppercase'
+    fontSize: 10,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textMuted,
+    marginBottom: 8,
+    letterSpacing: 1
   },
   cityList: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.body,
     lineHeight: 20
   }
 });

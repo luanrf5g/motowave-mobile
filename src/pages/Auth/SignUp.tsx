@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
-  KeyboardAvoidingView, Platform, ActivityIndicator
+  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase } from '../../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
+
+import { AuthService } from '../../services/authService';
+import { theme } from '../../config/theme';
 
 export const SignUp = () => {
   const navigation = useNavigation();
@@ -13,34 +15,26 @@ export const SignUp = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible] = useState(false);
 
   const handleSignUp = async () => {
-    if (!email || !password) return Alert.alert("Erro", "Preencha tudo");
+    if (!email || !password || !username) {
+      return Alert.alert("Erro", "Preencha todos os campos");
+    }
 
     setLoading(true);
-    // Cria o usuário
-    const { data: { user }, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username
-        }
-      }
-    });
+    const { user, error } = await AuthService.signUp({ email, password, username });
+    setLoading(false);
 
     if (error) {
-      setLoading(false);
-      Alert.alert("Erro ao cadastrar", error.message);
+      Alert.alert("Erro ao cadastrar", error);
       return;
     }
 
     if (user) {
-      Alert.alert("Sucesso", "Conta criada! Verifique seu e-mail ou faça login.");
-      navigation.goBack(); // Volta pro Login
+      Alert.alert("Bem-vindo!", "Conta criada com sucesso. Faça login para começar.");
+      navigation.goBack();
     }
-    setLoading(false);
   };
 
   return (
@@ -48,6 +42,8 @@ export const SignUp = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+
       <View style={styles.header}>
         <Text style={styles.title}>Criar Conta</Text>
         <Text style={styles.subtitle}>Entre para o clube MotoWave</Text>
@@ -55,22 +51,22 @@ export const SignUp = () => {
 
       <View style={styles.form}>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="account-outline" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="account-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Nome de usuário"
-            placeholderTextColor="#666"
+            placeholder="Nome de usuário (Apelido)"
+            placeholderTextColor={theme.colors.textMuted}
             value={username}
             onChangeText={setUsername}
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="email-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Seu melhor e-mail"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.colors.textMuted}
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -79,17 +75,21 @@ export const SignUp = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="lock-outline" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="lock-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Crie uma senha forte"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.colors.textMuted}
             secureTextEntry={!visible}
             value={password}
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setVisible(!visible)} style={{ paddingRight: 15 }}>
-            <MaterialCommunityIcons name={visible ? 'eye-off-outline' : 'eye-outline'} size={20} color="#666" />
+            <MaterialCommunityIcons
+              name={visible ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color={theme.colors.textMuted}
+            />
           </TouchableOpacity>
         </View>
 
@@ -97,9 +97,10 @@ export const SignUp = () => {
           style={styles.registerButton}
           onPress={handleSignUp}
           disabled={loading}
+          activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.colors.primary} />
           ) : (
             <Text style={styles.registerButtonText}>CADASTRAR</Text>
           )}
@@ -116,40 +117,63 @@ export const SignUp = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     padding: 20,
   },
   header: { marginBottom: 40 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#fff' },
-  subtitle: { fontSize: 16, color: '#27AE60', marginTop: 5 },
+  title: {
+    fontSize: 32,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.text,
+    letterSpacing: 1
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: theme.fonts.body,
+    color: theme.colors.primary,
+    marginTop: 5
+  },
 
   form: { width: '100%' },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: theme.colors.border,
     height: 55,
   },
   inputIcon: { marginLeft: 15, marginRight: 10 },
-  input: { flex: 1, color: '#fff', fontSize: 16, height: '100%' },
+  input: {
+    flex: 1,
+    color: theme.colors.text,
+    fontSize: 16,
+    height: '100%',
+  },
 
   registerButton: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#27AE60',
+    borderColor: theme.colors.primary,
     height: 55,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+    elevation: 3
   },
-  registerButtonText: { color: '#27AE60', fontSize: 18, fontWeight: 'bold' },
+  registerButtonText: {
+    color: theme.colors.primary,
+    fontSize: 18,
+    fontFamily: theme.fonts.title
+  },
 
   backButton: { marginTop: 20, alignItems: 'center' },
-  backButtonText: { color: '#888' }
+  backButtonText: {
+    color: theme.colors.textMuted,
+    fontSize: 16,
+  }
 });

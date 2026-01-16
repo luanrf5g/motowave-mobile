@@ -9,9 +9,30 @@ export interface City {
   longitude: number
 }
 
+// Tipagem da rota simples
 export interface Route {
   latitude: number,
   longitude: number
+}
+
+// Tipagem do responde do TripDetails
+export interface TripFullDetail {
+  id: string,
+  title: string,
+  total_distance: number,
+  created_at: string,
+  route_coords: { latitude: number, longitude: number }[],
+  cities: { name: string, latitude: number, longitude: number }[]
+}
+
+// RPC response
+interface RpcResponse {
+  id: string,
+  title: string,
+  total_distance: number,
+  created_at: string,
+  route_wkt: string,
+  cities_data: { name: string, location_wkt: string }[]
 }
 
 // tipagem do body da requisição de criar uma trip
@@ -34,6 +55,30 @@ export interface TripHistoryItem {
 
 const timeoutPromise = (ms: number) => {
   return new Promise((_, reject) => setTimeout(() => reject(new Error("Tempo limite excedido. Verifique sua conexao!")), ms))
+}
+
+const parseLineString = (wkt: string) => {
+  if (!wkt) return []
+  const content = wkt.replace('LINESTRING(', '').replace(')', '')
+  const points = content.split(',')
+
+  return points.map(p => {
+    const [lon, lat] = p.trim().split(' ')
+    return {
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lon)
+    }
+  })
+}
+
+const parsePoint = (wkt: string) => {
+  if (!wkt) return { latitude: 0, longitude: 0 }
+  const content = wkt.replace('POINT(', '').replace(')', '')
+  const [lon, lat] = content.trim().split(' ')
+  return {
+    latitude: parseFloat(lat),
+    longitude: parseFloat(lon)
+  }
 }
 
 export const TripServices = {
@@ -158,6 +203,41 @@ export const TripServices = {
 
       Alert.alert("Erro no envio", msg);
       return false;
+    }
+  },
+
+  getTripDetails: async (tripId: string): Promise<TripFullDetail> => {
+    try {
+      const { data: rpcData, error } = await supabase
+        .rpc('get_trip_details', { target_id: tripId })
+        .single()
+
+      if (error) throw error;
+
+      const data = rpcData as RpcResponse;
+
+      const parsedRoute = data.route_wkt ? parseLineString(data.route_wkt) : []
+
+      const parsedCities = (data.cities_data || []).map((c) => {
+        const coords = parsePoint(c.location_wkt);
+        return {
+          name: c.name,
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        }
+      })
+
+      return {
+        id: data.id,
+        title: data.title || "Viagem sem título",
+        total_distance: data.total_distance,
+        created_at: data.created_at,
+        route_coords: parsedRoute,
+        cities: parsedCities
+      }
+    } catch (error: any) {
+      console.error("Erro ao buscar detalhes: ", error.message)
+      throw error;
     }
   }
 }
