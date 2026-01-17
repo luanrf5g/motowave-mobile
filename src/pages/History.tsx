@@ -14,6 +14,7 @@ import { useTripHistory } from "../hooks/useTripHistory";
 import { TripHistoryItem } from "../services/tripServices";
 
 import { theme } from "../config/theme";
+import { HistorySkeleton } from "@/components/Skeletons";
 
 export const History = () => {
   const navigation = useNavigation<any>()
@@ -105,11 +106,11 @@ export const History = () => {
     <View style={styles.container}>
       <StatusBar style="light" backgroundColor={theme.colors.background} />
 
-      <CustomHeader showNotification={false}/>
+      <CustomHeader />
 
       {loading && history.length === 0 ? (
         <View style={styles.centerLoading}>
-          <ActivityIndicator size='large' color={theme.colors.primary} />
+          <HistorySkeleton />
         </View>
       ) : history.length === 0 ? (
         <View style={styles.emptyState}>

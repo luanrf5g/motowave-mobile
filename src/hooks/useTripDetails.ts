@@ -18,18 +18,27 @@ export const useTripDetails = () => {
     fetchDetails()
   }, [])
 
+  const focusMap = (data: TripFullDetail, bottom: number) => {
+    if (mapRef.current && data.route_coords.length > 0) {
+      mapRef.current.fitToCoordinates(data.route_coords, {
+        edgePadding: {
+          top: 100,
+          right: 50,
+          bottom: bottom,
+          left: 50
+        },
+        animated: true
+      });
+    }
+  }
+
   const fetchDetails = async () => {
     try {
       const data = await TripServices.getTripDetails(tripId)
       setTrip(data)
 
       setTimeout(() => {
-        if (mapRef.current && data.route_coords.length > 0) {
-          mapRef.current.fitToCoordinates(data.route_coords, {
-            edgePadding: { top: 100, right: 50, bottom: 250, left: 50 },
-            animated: true
-          })
-        }
+        focusMap(data, 250)
       }, 500)
     } catch (error) {
       showToast.error('Erro', 'Não foi possível carregar os Detalhes.')
@@ -43,6 +52,7 @@ export const useTripDetails = () => {
     trip,
     loading,
     mapRef,
+    focusMap,
     navigation
   }
 }

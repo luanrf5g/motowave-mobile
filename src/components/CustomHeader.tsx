@@ -1,17 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, StatusBar } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
+
+import { ProfileService } from '@/services/profileService';
 
 interface CustomHeaderProps {
   showNotification?: boolean;
 }
 
-export const CustomHeader = ({ showNotification = true }: CustomHeaderProps) => {
+export const CustomHeader = ({ showNotification = false }: CustomHeaderProps) => {
   const navigation = useNavigation<any>();
   const [currentCity, setCurrentCity] = useState("Localizando...");
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [avatarIcon, setAvatarIcon] = useState('account')
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAvatar()
+    }, [])
+  )
+
+  const fetchAvatar = async () => {
+    try {
+      const profile = await ProfileService.getProfile()
+      if(profile?.avatar_slug) {
+        setAvatarIcon(profile.avatar_slug)
+      }
+    } catch (e) {
+    }
+  }
 
   // Lógica Autônoma de Localização
   useEffect(() => {
@@ -19,7 +37,6 @@ export const CustomHeader = ({ showNotification = true }: CustomHeaderProps) => 
 
     const getLocation = async () => {
       try {
-        // Verifica permissão (sem pedir de novo se já tiver)
         const { status } = await Location.getForegroundPermissionsAsync();
 
         if (status !== 'granted') {
@@ -27,10 +44,8 @@ export const CustomHeader = ({ showNotification = true }: CustomHeaderProps) => 
           return;
         }
 
-        // Tenta pegar a última posição conhecida (Rápido)
         let location = await Location.getLastKnownPositionAsync({});
 
-        // Se não tiver última, pega a atual (Mais lento, mas preciso)
         if (!location) {
           location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         }
@@ -45,7 +60,6 @@ export const CustomHeader = ({ showNotification = true }: CustomHeaderProps) => 
             const city = address[0].city || address[0].subregion || address[0].district;
             const state = address[0].region; // Sigla do estado (ex: MG)
 
-            // Formatação bonita: "Viçosa - MG" ou só a cidade
             if(isMounted) setCurrentCity(state ? `${city} - ${state}` : city || "Desconhecido");
           }
         }
@@ -74,7 +88,7 @@ export const CustomHeader = ({ showNotification = true }: CustomHeaderProps) => 
           onPress={() => navigation.navigate('Passport')}
         >
           <View style={styles.avatarPlaceholder}>
-             <MaterialCommunityIcons name="account" size={20} color="#fff" />
+             <MaterialCommunityIcons name={avatarIcon as any} size={20} color="#fff" />
           </View>
         </TouchableOpacity>
 

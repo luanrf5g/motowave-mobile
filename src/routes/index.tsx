@@ -10,13 +10,17 @@ import { supabase } from '../lib/supabase';
 import { SignUp } from '../pages/Auth/SignUp';
 import { SignIn } from '../pages/Auth/SignIn';
 import { TripDetails } from '../pages/TripDetails';
+import { Settings } from '@/pages/Settings';
 
 type RootStackParamList = {
   SignIn: undefined,
   SignUp: undefined,
   TabRoutes: undefined,
-  TripDetails: undefined,
-  Cities: undefined
+  TripDetails: {
+    tripId: string
+  },
+  Cities: undefined,
+  Settings: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -56,6 +60,7 @@ export function Routes() {
             <Stack.Screen name="TabRoutes" component={TabRoutes}/>
             <Stack.Screen name="TripDetails" component={TripDetails} />
             <Stack.Screen name="Cities" component={Cities}/>
+            <Stack.Screen name="Settings" component={Settings} />
           </Stack.Group>
         )
         : (

@@ -240,5 +240,14 @@ export const TripServices = {
       console.error("Erro ao buscar detalhes: ", error.message)
       throw error;
     }
+  },
+
+  updateTrip: async (tripId: string, updates: { title?: string }) => {
+    const { error } = await supabase
+      .from('trips')
+      .update(updates)
+      .eq('id', tripId)
+
+    if (error) throw error;
   }
 }

@@ -1,12 +1,14 @@
-import { useNavigation } from "@react-navigation/native"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { usePassport } from "../hooks/usePassport"
 import { theme } from "../config/theme";
-import { PassportSkeleton } from "../components/PassportSkeleton"
 import { StatusBar } from "expo-status-bar";
 import { CustomHeader } from "../components/CustomHeader";
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient'
+import { useCallback, useState } from "react";
+import { PassportSkeleton } from "@/components/Skeletons";
+import { ProfileService } from "@/services/profileService";
 
 export const Passport = () => {
   const navigation = useNavigation<any>()
@@ -14,30 +16,51 @@ export const Passport = () => {
   const {
     loading, username, totalKm, citiesCount,
     currentLevel, nextLevel, progress,
-    loadStats, handleSignOut
+    loadStats
   } = usePassport()
+
+  const [avatar, setAvatar] = useState('account')
+  const [bio, setBio] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfileIdentify()
+    }, [])
+  )
+
+  const fetchProfileIdentify = async () => {
+    try {
+      const profile = await ProfileService.getProfile()
+      if(profile) {
+        setAvatar(profile.avatar_slug || 'account')
+        setBio(profile.bio || '')
+      }
+    } catch (error) {
+      console.log("Erro ao carregar avatar", error)
+    }
+  }
 
   if (loading && totalKm === 0) return <PassportSkeleton />
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" backgroundColor="#121212" translucent />
-      <CustomHeader showNotification />
+      <CustomHeader />
 
       <ScrollView
         contentContainerStyle={{paddingBottom: 40}}
         refreshControl={
           <RefreshControl
             refreshing={loading}
-            onRefresh={loadStats}
+            onRefresh={() => { loadStats(), fetchProfileIdentify() }}
             tintColor={theme.colors.primary}
           />
         }
       >
         {/* Header do Perfil */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleSignOut} style={styles.configBtn}>
-            <Ionicons name="power" size={24} color={theme.colors.textMuted} />
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.configBtn}>
+            <Ionicons name="settings-outline" size={24} color={theme.colors.textMuted} />
           </TouchableOpacity>
 
           <View style={styles.avatarWrapper}>
@@ -46,7 +69,7 @@ export const Passport = () => {
               style={styles.avatarBorder}
             >
               <View style={styles.avatarContainer}>
-                <MaterialCommunityIcons name="account" size={60} color="#fff" />
+                <MaterialCommunityIcons name={avatar as any} size={60} color="#fff" />
               </View>
             </LinearGradient>
 
@@ -57,6 +80,10 @@ export const Passport = () => {
           </View>
             <Text style={styles.username}>{username}</Text>
             <Text style={styles.userTitle}>{currentLevel.title}</Text>
+
+            {!!bio && (
+              <Text style={styles.userBio}>"{bio}"</Text>
+            )}
         </View>
 
         {/* Barra de XP */}
@@ -163,8 +190,8 @@ const styles = StyleSheet.create({
   },
   configBtn: {
     position: 'absolute',
-    top: 50,
-    right: 25,
+    top: 16,
+    right: 24,
     zIndex: 10,
     padding: 5
   },
@@ -217,6 +244,16 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+
+  userBio: {
+    fontSize: 12,
+    fontFamily: theme.fonts.title,
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    maxWidth: '70%'
   },
 
   xpContainer: {
