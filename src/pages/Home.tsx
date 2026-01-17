@@ -1,10 +1,9 @@
-import { ActivityIndicator, Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { useTripRecorder } from "../hooks/useTripRecorder"
 import { useState } from "react"
 import { supabase } from "../lib/supabase"
 import { useNavigation } from "@react-navigation/native"
 import { TripServices } from "../services/tripServices"
-import { StatusBar } from "expo-status-bar"
 import { theme } from "../config/theme"
 import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps"
 import { darkMapStyle } from "../styles/mapStyle"
@@ -75,7 +74,6 @@ export const Home = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" backgroundColor={theme.colors.background} />
 
       {location ? (
         <MapView
@@ -83,6 +81,7 @@ export const Home = () => {
           style={styles.map}
           customMapStyle={darkMapStyle}
           showsUserLocation
+          showsMyLocationButton={false}
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -95,6 +94,7 @@ export const Home = () => {
             latitudeDelta: 0.005,
             longitudeDelta: 0.005
           }}
+
         >
           <Polyline
             coordinates={route}
@@ -110,7 +110,7 @@ export const Home = () => {
       )}
 
       <View style={styles.hudWrapper}>
-        <BlurView intensity={40} tint="dark" style={styles.glassContainer}>
+        <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" experimentalBlurMethod="dimezisBlurView" style={styles.glassContainer}>
 
           {/* Distância */}
           <View style={styles.hudItem}>
