@@ -128,7 +128,7 @@ export const TripDetails = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingContainer}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 50}
       >
         <View style={styles.infoCard}>
           <View style={styles.dragHandle}/>

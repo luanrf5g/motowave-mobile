@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
-  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar
+  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar,
+  Image
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -42,9 +43,7 @@ export const SignIn = () => {
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
 
       <View style={styles.header}>
-        <View style={styles.logoCircle}>
-          <MaterialCommunityIcons name="bike-fast" size={50} color={theme.colors.primary} />
-        </View>
+        <Image source={require('../../../assets/logo.png')} style={styles.logoCircle} resizeMode='contain' />
         <Text style={styles.title}>MotoWave</Text>
         <Text style={styles.subtitle}>Seu diário de bordo inteligente</Text>
       </View>
@@ -101,7 +100,7 @@ export const SignIn = () => {
           onPress={() => navigation.navigate('SignUp')}
         >
           <Text style={styles.registerText}>
-            Ainda não tem conta? <Text style={styles.registerHighlight}>Crie agora</Text>
+            Ainda não tem conta? <Text style={styles.registerHighlight}>Crie Agora</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -123,17 +122,9 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    elevation: 10,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
   },
   title: {
     fontSize: 32,

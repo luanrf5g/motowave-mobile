@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Dimensions
+  TextInput, ActivityIndicator, Alert, Dimensions,
+  Image,
+  Platform,
+  ScrollView
 } from 'react-native';
 import ViewShot from "react-native-view-shot";
 import * as Sharing from 'expo-sharing';
+import * as NavigationBar from 'expo-navigation-bar'
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
@@ -14,7 +18,10 @@ import { darkMapStyle } from '../styles/mapStyle';
 import { ProfileService } from '../services/profileService';
 import { showToast } from '@/utils/toast';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+const CARD_SCALE = height < 750 ? 0.85 : 1
+const CARD_WIDTH = width * 0.85 * CARD_SCALE
 
 // Interface exata que você forneceu
 export interface TripFullDetail {
@@ -45,6 +52,14 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
   const [userProfile, setUserProfile] = useState({ username: "Piloto", avatar: "account" });
 
   useEffect(() => {
+    async function customSystem() {
+      if (Platform.OS === 'android') {
+        await NavigationBar.setVisibilityAsync('hidden')
+      }
+    }
+
+    customSystem()
+
     if (visible && trip) {
       setCustomTitle(trip.title || "Rolê de Moto");
       loadUserProfile();
@@ -103,7 +118,8 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
   const formattedDate = new Date(trip.created_at).toLocaleDateString('pt-BR');
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent={true}>
+      {/* </ScrollView> */}
       <View style={styles.modalContainer}>
 
         {/* Header Controls */}
@@ -116,156 +132,159 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
         </View>
 
         {/* Input de Título */}
-        <View style={styles.editContainer}>
-          <Text style={styles.editLabel}>Título da História:</Text>
-          <TextInput
-            style={styles.input}
-            value={customTitle}
-            onChangeText={setCustomTitle}
-            maxLength={30}
-            placeholder="Ex: Serra do Rio do Rastro"
-            placeholderTextColor="#666"
-          />
+        <Text style={styles.editLabel}>Título da História:</Text>
+        <View style={styles.toolbarContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              value={customTitle}
+              onChangeText={setCustomTitle}
+              maxLength={30}
+              placeholder="Ex: Serra do Rio do Rastro"
+              placeholderTextColor="#666"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={handleShare}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size='small' />
+            ) : (
+              <MaterialCommunityIcons name='send' size={24} style={{ marginLeft: 2 }} color="#fff" />
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* --- O CARD (ÁREA DE CAPTURA) --- */}
-        <View style={styles.cardWrapper}>
-          <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={{ backgroundColor: '#121212' }}>
-            <View style={styles.card}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.cardWrapper}>
+            <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={{ backgroundColor: '#121212' }}>
+              <View style={[styles.card, { width: CARD_WIDTH}]}>
 
-              {/* 1. MAPA BACKGROUND */}
-              <MapView
-                ref={mapRef}
-                provider={PROVIDER_GOOGLE}
-                customMapStyle={darkMapStyle}
-                style={StyleSheet.absoluteFill}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                pitchEnabled={false}
-                rotateEnabled={false}
-              >
-                {trip.route_coords.length > 0 && (
-                  <Polyline
-                    coordinates={trip.route_coords}
-                    strokeWidth={5}
-                    strokeColor="#27AE60" // Verde Neon Solicitado
-                  />
-                )}
-              </MapView>
+                {/* 1. MAPA BACKGROUND */}
+                <MapView
+                  ref={mapRef}
+                  provider={PROVIDER_GOOGLE}
+                  customMapStyle={darkMapStyle}
+                  style={StyleSheet.absoluteFill}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                >
+                  {trip.route_coords.length > 0 && (
+                    <Polyline
+                      coordinates={trip.route_coords}
+                      strokeWidth={5}
+                      strokeColor="#27AE60" // Verde Neon Solicitado
+                    />
+                  )}
+                </MapView>
 
-              {/* 2. OVERLAY GLASS (Fundo Escuro Transparente) */}
-              <LinearGradient
-                colors={['rgba(18,18,18,0.3)', 'rgba(18,18,18,0.85)', '#121212']}
-                style={[StyleSheet.absoluteFill, { borderWidth: 1, borderColor: '#121212' }]}
-                locations={[0, 0.6, 1]}
-              />
+                {/* 2. OVERLAY GLASS (Fundo Escuro Transparente) */}
+                <LinearGradient
+                  colors={['rgba(18,18,18,0.3)', 'rgba(18,18,18,0.85)', '#121212']}
+                  style={[StyleSheet.absoluteFill, { borderWidth: 1, borderColor: '#121212' }]}
+                  locations={[0, 0.6, 1]}
+                  pointerEvents='none'
+                />
 
-              {/* 3. CONTEÚDO */}
-              <View style={styles.cardContent}>
+                {/* 3. CONTEÚDO */}
+                <View style={styles.cardContent}>
 
-                {/* HEADER: Marca e Usuário */}
-                <View style={styles.cardHeader}>
-                  {/* Lado Esquerdo: Marca */}
-                  <View style={styles.brandContainer}>
-                    <MaterialCommunityIcons name="bike-fast" size={24} color={theme.colors.primary} />
-                    <Text style={styles.brandName}>MotoWave</Text>
-                  </View>
-
-                  {/* Lado Direito: Usuário + Avatar */}
-                  <View style={styles.userBadge}>
-                    <Text style={styles.userName}>@{userProfile.username}</Text>
-                    <View style={styles.avatarCircle}>
-                       <MaterialCommunityIcons name={userProfile.avatar as any} size={16} color="#fff" />
+                  {/* HEADER: Marca e Usuário */}
+                  <View style={styles.cardHeader}>
+                    {/* Lado Esquerdo: Marca */}
+                    <View style={styles.brandContainer}>
+                      <Image source={require('../../assets/logo.png')} style={styles.logo} />
+                      <Text style={styles.brandName}>MotoWave</Text>
                     </View>
-                  </View>
-                </View>
 
-                {/* TÍTULO DA VIAGEM */}
-                <View style={styles.titleArea}>
-                  <Text style={styles.tripTitle} numberOfLines={2}>{customTitle}</Text>
-                  <Text style={styles.tripDate}>{formattedDate}</Text>
-                </View>
-
-                {/* MÉTRICAS (Apenas Distância e Cidades) */}
-                <View style={styles.statsRow}>
-                  {/* Distância */}
-                  <View style={styles.statItem}>
-                    <View style={styles.iconBg}>
-                      <MaterialCommunityIcons name="map-marker-distance" size={20} color="#FFF" />
-                    </View>
-                    <Text style={styles.statValue}>
-                      {trip.total_distance.toFixed(1)} <Text style={styles.unit}>km</Text>
-                    </Text>
-                    <Text style={styles.statLabel}>PERCORRIDOS</Text>
-                  </View>
-
-                  <View style={styles.verticalDivider} />
-
-                  {/* Cidades */}
-                  <View style={styles.statItem}>
-                    <View style={[styles.iconBg, { backgroundColor: theme.colors.info }]}>
-                      <FontAwesome5 name="city" size={14} color="#FFF" />
-                    </View>
-                    <Text style={styles.statValue}>
-                      {citiesCount}
-                    </Text>
-                    <Text style={styles.statLabel}>CIDADES</Text>
-                  </View>
-                </View>
-
-                {/* FOOTER: Roteiro e Origem/Destino */}
-                <View style={styles.footer}>
-
-                   {/* Lista de Cidades (Roteiro) */}
-                   {cityListNames.length > 0 && (
-                     <View style={styles.routeListContainer}>
-                        <Text style={styles.routeLabel}>ROTEIRO</Text>
-                        <Text style={styles.routeListText} numberOfLines={2}>
-                           {cityListNames.join(" • ")}
-                        </Text>
-                     </View>
-                   )}
-
-                   <View style={styles.divider} />
-
-                   {/* De -> Para */}
-                   <View style={styles.pathContainer}>
-                      <View style={{flex: 1}}>
-                         <Text style={styles.pathLabel}>DE</Text>
-                         <Text style={styles.pathCity} numberOfLines={1}>{startCity}</Text>
+                    {/* Lado Direito: Usuário + Avatar */}
+                    <View style={styles.userBadge}>
+                      <Text style={styles.userName}>@{userProfile.username}</Text>
+                      <View style={styles.avatarCircle}>
+                        <MaterialCommunityIcons name={userProfile.avatar as any} size={16} color="#fff" />
                       </View>
+                    </View>
+                  </View>
 
-                      <MaterialCommunityIcons name="arrow-right-thin" size={30} color={theme.colors.primary} style={{marginHorizontal: 10}} />
+                  {/* TÍTULO DA VIAGEM */}
+                  <View style={styles.titleArea}>
+                    <Text style={styles.tripTitle} numberOfLines={2}>{customTitle}</Text>
+                    <Text style={styles.tripDate}>{formattedDate}</Text>
+                  </View>
 
-                      <View style={{flex: 1, alignItems: 'flex-end'}}>
-                         <Text style={styles.pathLabel}>PARA</Text>
-                         <Text style={styles.pathCity} numberOfLines={1}>{endCity}</Text>
+                  {/* MÉTRICAS (Apenas Distância e Cidades) */}
+                  <View style={styles.statsRow}>
+                    {/* Distância */}
+                    <View style={styles.statItem}>
+                      <View style={styles.iconBg}>
+                        <MaterialCommunityIcons name="map-marker-distance" size={20} color="#FFF" />
                       </View>
-                   </View>
+                      <Text style={styles.statValue}>
+                        {trip.total_distance.toFixed(1)} <Text style={styles.unit}>km</Text>
+                      </Text>
+                      <Text style={styles.statLabel}>PERCORRIDOS</Text>
+                    </View>
 
-                   <Text style={styles.credits}>
-                     Desenvolvido por KytSoftwares com 💚 e gasolina
-                   </Text>
+                    <View style={styles.verticalDivider} />
+
+                    {/* Cidades */}
+                    <View style={styles.statItem}>
+                      <View style={[styles.iconBg, { backgroundColor: theme.colors.info }]}>
+                        <FontAwesome5 name="city" size={14} color="#FFF" />
+                      </View>
+                      <Text style={styles.statValue}>
+                        {citiesCount}
+                      </Text>
+                      <Text style={styles.statLabel}>CIDADES</Text>
+                    </View>
+                  </View>
+
+                  {/* FOOTER: Roteiro e Origem/Destino */}
+                  <View style={styles.footer}>
+
+                    {/* Lista de Cidades (Roteiro) */}
+                    {cityListNames.length > 0 && (
+                      <View style={styles.routeListContainer}>
+                          <Text style={styles.routeLabel}>ROTEIRO</Text>
+                          <Text style={styles.routeListText} numberOfLines={2}>
+                            {cityListNames.join(" • ")}
+                          </Text>
+                      </View>
+                    )}
+
+                    <View style={styles.divider} />
+
+                    {/* De -> Para */}
+                    <View style={styles.pathContainer}>
+                        <View style={{flex: 1}}>
+                          <Text style={styles.pathLabel}>DE</Text>
+                          <Text style={styles.pathCity} numberOfLines={1}>{startCity}</Text>
+                        </View>
+
+                        <MaterialCommunityIcons name="arrow-right-thin" size={30} color={theme.colors.primary} style={{marginHorizontal: 10}} />
+
+                        <View style={{flex: 1, alignItems: 'flex-end'}}>
+                          <Text style={styles.pathLabel}>PARA</Text>
+                          <Text style={styles.pathCity} numberOfLines={1}>{endCity}</Text>
+                        </View>
+                    </View>
+
+                    <Text style={styles.credits}>
+                      Desenvolvido por KytSoftwares com 💚 e gasolina
+                    </Text>
+                  </View>
+
                 </View>
-
               </View>
-            </View>
-          </ViewShot>
-        </View>
-
-        {/* Botão Share */}
-        <TouchableOpacity
-          style={styles.shareBtn}
-          onPress={handleShare}
-          disabled={loading}
-        >
-          {loading ? <ActivityIndicator color="#000" /> : (
-            <>
-              <MaterialCommunityIcons name="instagram" size={24} color="#000" style={{marginRight: 10}} />
-              <Text style={styles.shareBtnText}>COMPARTILHAR STORIES</Text>
-            </>
-          )}
-        </TouchableOpacity>
+            </ViewShot>
+          </View>
+        </ScrollView>
+        {/* --- O CARD (ÁREA DE CAPTURA) --- */}
 
       </View>
     </Modal>
@@ -292,9 +311,30 @@ const styles = StyleSheet.create({
 
   editContainer: { width: '85%', marginBottom: 20 },
   editLabel: { color: '#888', fontSize: 12, marginBottom: 5, fontFamily: theme.fonts.body },
+
+  toolbarContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+    marginRight: 10
+  },
   input: {
     backgroundColor: '#1a1a1a', color: '#fff', padding: 12, borderRadius: 12,
     borderWidth: 1, borderColor: '#333', fontFamily: theme.fonts.title
+  },
+  actionBtn: {
+    width: 48, height: 48, borderRadius: 25, backgroundColor: theme.colors.primary,
+    justifyContent: 'center', alignItems: 'center', elevation: 5
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // CARD STYLES
@@ -320,6 +360,7 @@ const styles = StyleSheet.create({
   // Header Card
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
   brandContainer: { flexDirection: 'row', alignItems: 'center' },
+  logo: {width: 24, height: 24, justifyContent: 'center', alignItems: 'center', },
   brandName: { color: '#FFF', fontFamily: theme.fonts.title, fontSize: 14, marginLeft: 8, letterSpacing: 1 },
 
   userBadge: {
@@ -377,7 +418,7 @@ const styles = StyleSheet.create({
   shareBtn: {
     flexDirection: 'row', backgroundColor: theme.colors.primary,
     paddingVertical: 16, paddingHorizontal: 40, borderRadius: 30,
-    marginTop: 8, alignItems: 'center', elevation: 5
+    marginTop: 30, alignItems: 'center', elevation: 5
   },
   shareBtnText: { color: '#000', fontFamily: theme.fonts.title, fontSize: 14 }
 });
