@@ -16,7 +16,7 @@ import {
 import { useCallback, useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './src/config/toastConfig';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView} from 'react-native-gesture-handler'
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,13 +49,15 @@ export default function App() {
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
-      <ThemeProvider theme='dark'>
-        <StatusBar style='light' backgroundColor='transparent' translucent/>
-        <Routes />
+    <GestureHandlerRootView style={{ flex: 1 }} >
+      <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
+        <ThemeProvider theme='dark'>
+          <StatusBar style='light' backgroundColor='transparent' translucent/>
+          <Routes />
 
-        <Toast config={toastConfig} />
-      </ThemeProvider>
-    </View>
+          <Toast config={toastConfig} />
+        </ThemeProvider>
+      </View>
+    </GestureHandlerRootView>
   );
 }
