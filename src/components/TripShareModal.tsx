@@ -51,6 +51,9 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
   // Estados de Usuário
   const [userProfile, setUserProfile] = useState({ username: "Piloto", avatar: "account" });
 
+  // Correção para erro do MapView do android
+  const [tempMapImage, setTempMapImage] = useState<string | null>(null)
+
   useEffect(() => {
     async function customSystem() {
       if (Platform.OS === 'android') {
@@ -89,8 +92,22 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
   const handleShare = async () => {
     setLoading(true);
     try {
-      // Pequeno delay para garantir que o mapa esteja renderizado
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if(Platform.OS === 'android' && mapRef.current) {
+        const mapSnapshot = await mapRef.current.takeSnapshot({
+          width: 300,
+          height: 600,
+          result: 'file',
+          format: 'png',
+          quality: 0.8
+        })
+
+        setTempMapImage(mapSnapshot)
+
+        await new Promise(resolve => setTimeout(resolve, 200))
+      } else {
+        // Pequeno delay para garantir que o mapa esteja renderizado
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       const uri = await viewShotRef.current.capture();
 
@@ -104,6 +121,7 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
       showToast.error("Erro", "Falha ao gerar a imagem.");
     } finally {
       setLoading(false);
+      setTempMapImage(null)
     }
   };
 
@@ -164,24 +182,32 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
               <View style={[styles.card, { width: CARD_WIDTH}]}>
 
                 {/* 1. MAPA BACKGROUND */}
-                <MapView
-                  ref={mapRef}
-                  provider={PROVIDER_GOOGLE}
-                  customMapStyle={darkMapStyle}
-                  style={StyleSheet.absoluteFill}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                  pitchEnabled={false}
-                  rotateEnabled={false}
-                >
-                  {trip.route_coords.length > 0 && (
-                    <Polyline
-                      coordinates={trip.route_coords}
-                      strokeWidth={5}
-                      strokeColor="#27AE60" // Verde Neon Solicitado
-                    />
-                  )}
-                </MapView>
+                {tempMapImage ? (
+                  <Image
+                    source={{ uri: tempMapImage }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode='cover'
+                  />
+                ) : (
+                  <MapView
+                    ref={mapRef}
+                    provider={PROVIDER_GOOGLE}
+                    customMapStyle={darkMapStyle}
+                    style={StyleSheet.absoluteFill}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    {trip.route_coords.length > 0 && (
+                      <Polyline
+                        coordinates={trip.route_coords}
+                        strokeWidth={5}
+                        strokeColor="#27AE60" // Verde Neon Solicitado
+                      />
+                    )}
+                  </MapView>
+                )}
 
                 {/* 2. OVERLAY GLASS (Fundo Escuro Transparente) */}
                 <LinearGradient
