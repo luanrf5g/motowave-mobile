@@ -2,7 +2,6 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import { useEffect, useRef, useState } from "react";
 import { TripFullDetail, TripServices } from "../services/tripServices";
 import MapView from "react-native-maps";
-import { Alert } from "react-native";
 import { showToast } from "../utils/toast";
 
 export const useTripDetails = () => {

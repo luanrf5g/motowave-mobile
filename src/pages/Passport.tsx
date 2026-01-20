@@ -15,7 +15,7 @@ export const Passport = () => {
 
   const {
     loading, username, totalKm, citiesCount,
-    currentLevel, nextLevel, progress,
+    currentLevel, nextLevel, badges, progress,
     loadStats
   } = usePassport()
 
@@ -74,7 +74,7 @@ export const Passport = () => {
             </LinearGradient>
 
             <View style={[styles.levelBadge, { backgroundColor: currentLevel.color}]}>
-              <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
+              <Text style={styles.levelBadgeText}>{currentLevel.level_number}</Text>
             </View>
 
           </View>
@@ -89,9 +89,9 @@ export const Passport = () => {
         {/* Barra de XP */}
         <View style={styles.xpContainer}>
           <View style={styles.xpHeader}>
-            <Text style={styles.xpText}>Nível {currentLevel.level}</Text>
+            <Text style={styles.xpText}>Nível {currentLevel.level_number}</Text>
             <Text style={styles.xpText}>
-              {totalKm.toFixed(1)} / {nextLevel.minKm} km
+              {totalKm.toFixed(1)} / {nextLevel.min_km} km
             </Text>
           </View>
           <View style={styles.xpBarBg}>
@@ -103,7 +103,7 @@ export const Passport = () => {
             />
           </View>
           <Text style={styles.xpNextText}>
-            Faltam {(nextLevel.minKm - totalKm).toFixed(1)} km para {nextLevel.title}
+            Faltam {(nextLevel.min_km - totalKm).toFixed(1)} km para {nextLevel.title}
           </Text>
         </View>
 
@@ -142,37 +142,29 @@ export const Passport = () => {
           </View>
 
           <View style={styles.badgeRow}>
-            {/* Badge 1: Start */}
-            <View style={[styles.badgeItem, totalKm > 0 ? styles.badgeUnlocked : styles.badgeLocked]}>
-              <MaterialCommunityIcons
-                name="flag-checkered"
-                size={28}
-                color={totalKm > 0 ? '#f1c40f' : '#555'}
-              />
-              <Text style={styles.badgeLabel}>Start</Text>
-            </View>
+            {badges.map((badge) => (
+              <View
+                key={badge.id}
+                style={[
+                  styles.badgeItem,
+                  badge.unlocked && styles.badgeUnlocked
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={badge.icon as any}
+                  size={28}
+                  color={badge.unlocked ? badge.color : '#555'}
+                />
+                <Text style={styles.badgeLabel}>{badge.name}</Text>
+                <Text style={styles.badgeCrit}>{badge.criteria_value} {badge.criteria_type === 'distance' ? 'km' : 'Cidades'}</Text>
+              </View>
 
-            {/* Badge 2: Explorador */}
-            <View style={[styles.badgeItem, citiesCount >= 5 ? styles.badgeUnlocked : styles.badgeLocked]}>
-              <MaterialCommunityIcons
-                name="flag-checkered"
-                size={28}
-                color={citiesCount >= 5 ? theme.colors.info : '#555'}
-              />
-              <Text style={styles.badgeLabel}>Explorador</Text>
-            </View>
-
-            {/* Badge 3: Iron Butt */}
-            <View style={[styles.badgeItem, totalKm >= 500 ? styles.badgeUnlocked : styles.badgeLocked]}>
-              <MaterialCommunityIcons
-                name="flag-checkered"
-                size={28}
-                color={totalKm >= 500 ? '#9b59b6' : '#555'}
-              />
-              <Text style={styles.badgeLabel}>Iron Butt</Text>
-            </View>
+            ))}
           </View>
+
         </View>
+
+        <View style={{height: 40}} />
       </ScrollView>
     </View>
   )
@@ -337,33 +329,40 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontFamily: theme.fonts.title,
-    color: theme.colors.text
+    color: theme.colors.text,
+    marginBottom: 15,
   },
   badgeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: 12,
   },
   badgeItem: {
-    width: '30%',
-    aspectRatio: 1,
+    width: '31%',
+    aspectRatio: 0.9,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
+    marginBottom: 10,backgroundColor: '#181818',
+    borderColor: '#222',
+    opacity: 0.6
   },
   badgeUnlocked: {
     backgroundColor: theme.colors.surface,
-    borderColor: '#333'
-  },
-  badgeLocked: {
-    backgroundColor: '#181818',
-    borderColor: '#222',
-    opacity: 0.6
+    borderColor: '#333',
+    opacity: 1,
   },
   badgeLabel: {
     color: theme.colors.textSecondary,
     fontSize: 10,
     marginTop: 8,
     fontFamily: theme.fonts.subtitle
-  }
+  },
+  badgeCrit: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: theme.fonts.body
+  },
 })

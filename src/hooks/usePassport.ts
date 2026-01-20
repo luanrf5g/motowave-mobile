@@ -1,54 +1,130 @@
-import { useCallback, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { ProfileService } from "@/services/profileService"
+import { TripServices } from "@/services/tripServices"
 import { useFocusEffect } from "@react-navigation/native"
-import { Alert } from "react-native"
+import { useCallback, useState } from "react"
 
-import { supabase } from "../lib/supabase"
-import { Level, LEVEL_SYSTEM, UserService } from "../services/userService"
+export interface Level {
+  level_number: number,
+  title: string,
+  min_km: number,
+  color: string,
+}
+
+export interface Badge {
+  id: number,
+  slug: string,
+  name: string,
+  description: string,
+  icon: string,
+  color: string,
+  criteria_type: 'distance' | 'cities',
+  criteria_value: number,
+  unlocked: boolean,
+}
 
 export const usePassport = () => {
   const [loading, setLoading] = useState(true)
+  const [username, setUsername] = useState('')
 
-  const [username, setUsername] = useState<string>("Viajante")
+  // Stats do usuário
   const [totalKm, setTotalKm] = useState(0)
   const [citiesCount, setCitiesCount] = useState(0)
 
-  const [currentLevel, setCurrentLevel] = useState<Level>(LEVEL_SYSTEM[0])
-  const [nextLevel, setNextLevel] = useState<Level>(LEVEL_SYSTEM[1])
+  // Gamification Data
+  const [levels, setLevels] = useState<Level[]>([])
+  const [badges, setBadges] = useState<Badge[]>([])
+
+  // Nível Atual
+  const [currentLevel, setCurrentLevel] = useState<Level>({
+    level_number: 1, title: 'Carregando...', min_km: 0, color: '#333'
+  })
+  const [nextLevel, setNextLevel] = useState<Level>({
+    level_number: 2, title: '...', min_km: 100, color: '#333'
+  })
   const [progress, setProgress] = useState(0)
 
-  const loadStats = useCallback(async () => {
+  const loadStats = async () => {
+    setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const profile = await ProfileService.getProfile()
+      if (!profile) return;
+      if (profile) setUsername(profile.username || 'Piloto')
 
-      const stats = await UserService.getUserStats(user.id)
+      const { total_distance, visited_cities } = await TripServices.getUserStats()
 
-      setUsername(stats.username)
-      setTotalKm(stats.totalKm)
-      setCitiesCount(stats.cititesCount)
+      const userKm = total_distance || 0
+      const userCities = visited_cities || 0
 
-      const levelInfo = UserService.calculateLevel(stats.totalKm)
-      setCurrentLevel(levelInfo.current)
-      setNextLevel(levelInfo.next)
-      setProgress(levelInfo.progress)
+      setTotalKm(userKm)
+      setCitiesCount(userCities)
+
+      const { data: levelsData} = await supabase
+        .from('gamification_levels')
+        .select('*')
+        .order('level_number', { ascending: true })
+
+      if (levelsData && levelsData.length > 0) {
+        setLevels(levelsData)
+        calculateLevel(userKm, levelsData)
+      }
+
+      const { data: badgesData } = await supabase
+        .from('gamification_badges')
+        .select('*')
+        .order('criteria_value', { ascending: true })
+
+      if (badgesData) {
+        const processedBadges = badgesData.map((badge: Badge) => {
+          let isUnlocked = false
+
+          if(badge.criteria_type === 'distance') {
+            isUnlocked = userKm >= badge.criteria_value
+          } else if (badge.criteria_type === 'cities') {
+            isUnlocked = userCities >= badge.criteria_value
+          }
+
+          return { ...badge, unlocked: isUnlocked}
+        })
+
+        setBadges(processedBadges)
+      }
     } catch (error) {
+      console.log('Erro ao carregar passport: ', error)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
+
+  const calculateLevel = (km: number, levelList: Level[]) => {
+    const current = levelList
+      .slice()
+      .reverse()
+      .find(l => km >= l.min_km) || levelList[0]
+
+    const next = levelList.find(l => l.level_number === current.level_number + 1)
+
+    setCurrentLevel(current)
+
+    if (next) {
+      setNextLevel(next)
+      //  Calculo da barra de progresso
+      const totalRange = next.min_km - current.min_km
+      const currentProgress = km - current.min_km
+      const percent = Math.min(Math.max(currentProgress / totalRange, 0), 1)
+      setProgress(percent)
+    } else {
+      // Nível máximo atingido
+      setNextLevel({ ...current, title: 'Nível Máximo', min_km: km})
+      setProgress(1)
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       loadStats()
-    }, [loadStats])
+    }, [])
   )
-
-  const handleSignOut = () => {
-    Alert.alert("Desconectar", "Tem certeza que deseja sair?", [
-      { text: "Ficar", style: 'cancel' },
-      { text: "Sair", style: "destructive", onPress: UserService.singOut }
-    ])
-  }
 
   return {
     loading,
@@ -58,7 +134,7 @@ export const usePassport = () => {
     currentLevel,
     nextLevel,
     progress,
-    loadStats,
-    handleSignOut
+    badges,
+    loadStats
   }
 }

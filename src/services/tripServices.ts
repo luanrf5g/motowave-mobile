@@ -1,5 +1,4 @@
 import { supabase } from "../lib/supabase";
-import { Alert } from "react-native";
 import { showToast } from "../utils/toast";
 
 // tipagem do corpo das cidades
@@ -34,6 +33,11 @@ interface RpcResponse {
   created_at: string,
   route_wkt: string,
   cities_data: { name: string, location_wkt: string }[]
+}
+
+interface UserStatsResponse {
+  total_distance: number,
+  visited_cities: number
 }
 
 // tipagem do body da requisição de criar uma trip
@@ -249,5 +253,47 @@ export const TripServices = {
       .eq('id', tripId)
 
     if (error) throw error;
+  },
+
+  getUserStats: async (): Promise<UserStatsResponse> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não logado')
+
+      const { data: trips, error: tripsError } = await supabase
+        .from('trips')
+        .select('total_distance')
+        .eq('user_id', user.id)
+
+      if (tripsError) throw tripsError
+
+      const totalDistance = trips.reduce((acc, trip) => acc + (trip.total_distance || 0), 0) || 0;
+
+      const { data: cities, error: citiesError } = await supabase
+        .from('visited_cities')
+        .select('city_name, state, trip_id')
+        .eq('user_id', user.id)
+
+      if (citiesError) {
+        console.log('Erro ao buscar Cidades: ', citiesError)
+        return { total_distance: totalDistance, visited_cities: 0 }
+      }
+
+      const uniqueCities = new Set();
+      cities.forEach(city => {
+        const key = city.state
+          ? `${city.city_name}-${city.state}`
+          : city.city_name
+        uniqueCities.add(key)
+      })
+
+      return {
+        total_distance: totalDistance,
+        visited_cities: uniqueCities.size
+      }
+    } catch (error) {
+      console.log('Erro ao calcular estatísticas: ', error)
+      return { total_distance: 0, visited_cities: 0 }
+    }
   }
 }
