@@ -156,7 +156,7 @@ export const useTripRecorder = () => {
       const lastPoint = sessionRef.current.route[sessionRef.current.route.length - 1]
       const dist = haversine(lastPoint, newPoint, { unit: 'km' }) || 0;
 
-      if (dist > 0.05) {
+      if (dist > 0.01) {
         sessionRef.current.distance += dist;
         sessionRef.current.route.push(newPoint)
 
