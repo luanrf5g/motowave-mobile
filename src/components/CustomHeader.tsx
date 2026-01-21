@@ -5,6 +5,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 
 import { ProfileService } from '@/services/profileService';
+import { normalizeStateCode } from '@/utils/stateNormalize';
 
 interface CustomHeaderProps {
   showNotification?: boolean;
@@ -58,7 +59,8 @@ export const CustomHeader = ({ showNotification = false }: CustomHeaderProps) =>
 
           if (address.length > 0) {
             const city = address[0].city || address[0].subregion || address[0].district;
-            const state = address[0].region; // Sigla do estado (ex: MG)
+            const rawState = address[0].region; // Sigla do estado (ex: MG)
+            const state = normalizeStateCode(rawState)
 
             if(isMounted) setCurrentCity(state ? `${city} - ${state}` : city || "Desconhecido");
           }

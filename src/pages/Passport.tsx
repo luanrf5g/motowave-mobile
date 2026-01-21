@@ -164,7 +164,7 @@ export const Passport = () => {
 
         </View>
 
-        <View style={{height: 40}} />
+        <View style={{height: 20}} />
       </ScrollView>
     </View>
   )
@@ -281,7 +281,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: theme.fonts.title
   },
-
   statsContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
@@ -316,7 +315,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontFamily: theme.fonts.title
   },
-
   section: {
     marginHorizontal: 20,
   },

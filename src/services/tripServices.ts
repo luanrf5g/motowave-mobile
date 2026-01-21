@@ -94,7 +94,7 @@ export const TripServices = {
       const { data, error } = await supabase
         .from('trips')
         .select('id, created_at, total_distance, title, start_lat, start_lon')
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
 
       if (error) throw error;
       return data || [];
@@ -281,9 +281,7 @@ export const TripServices = {
 
       const uniqueCities = new Set();
       cities.forEach(city => {
-        const key = city.state
-          ? `${city.city_name}-${city.state}`
-          : city.city_name
+        const key = city.city_name
         uniqueCities.add(key)
       })
 
