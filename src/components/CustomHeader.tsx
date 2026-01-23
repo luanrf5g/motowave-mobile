@@ -117,6 +117,14 @@ export const CustomHeader = ({ showNotification = false }: CustomHeaderProps) =>
             <View style={styles.badge} />
           )}
         </TouchableOpacity>
+
+        {/* LADO DIREITO: Feedbacks */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Contact')}
+          style={styles.iconButton}
+        >
+          <MaterialCommunityIcons name='message-text-outline' size={20} color='#fff' />
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -1,11 +1,12 @@
 import { Platform, View } from 'react-native';
 import { Routes } from './src/routes';
 import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen'
 import { ThemeProvider } from 'react-native-rapi-ui'
+import * as SplashScreen from 'expo-splash-screen'
 import * as NavigationBar from 'expo-navigation-bar'
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SystemUI from 'expo-system-ui'
+
+import { TourGuideProvider } from 'rn-tourguide'
 
 import {
   useFonts,
@@ -51,12 +52,23 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }} >
       <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
-        <ThemeProvider theme='dark'>
-          <StatusBar style='light' backgroundColor='transparent' translucent/>
-          <Routes />
+          <ThemeProvider theme='dark'>
+      <TourGuideProvider
+        androidStatusBarVisible={true}
+        backdropColor='rgba(0, 0, 0, 0.7)'
+        labels={{
+          previous: 'Anterior',
+          next: 'Próximo',
+          skip: 'Pular',
+          finish: 'Ir para o Passaporte.'
+        }}
+      >
+            <StatusBar style='light' backgroundColor='transparent' translucent/>
+            <Routes />
 
-          <Toast config={toastConfig} />
-        </ThemeProvider>
+            <Toast config={toastConfig} />
+        </TourGuideProvider>
+          </ThemeProvider>
       </View>
     </GestureHandlerRootView>
   );

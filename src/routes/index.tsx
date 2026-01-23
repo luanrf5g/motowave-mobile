@@ -11,6 +11,7 @@ import { SignUp } from '../pages/Auth/SignUp';
 import { SignIn } from '../pages/Auth/SignIn';
 import { TripDetails } from '../pages/TripDetails';
 import { Settings } from '@/pages/Settings';
+import { ContactScreen } from '@/pages/ContacScreen';
 
 type RootStackParamList = {
   SignIn: undefined,
@@ -20,7 +21,8 @@ type RootStackParamList = {
     tripId: string
   },
   Cities: undefined,
-  Settings: undefined
+  Settings: undefined,
+  Contact: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -61,6 +63,7 @@ export function Routes() {
             <Stack.Screen name="TripDetails" component={TripDetails} />
             <Stack.Screen name="Cities" component={Cities}/>
             <Stack.Screen name="Settings" component={Settings} />
+            <Stack.Screen name="Contact" component={ContactScreen} />
           </Stack.Group>
         )
         : (
