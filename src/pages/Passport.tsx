@@ -1,17 +1,28 @@
-import { useFocusEffect, useNavigation } from "@react-navigation/native"
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
+import { InteractionManager, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { usePassport } from "../hooks/usePassport"
 import { theme } from "../config/theme";
 import { StatusBar } from "expo-status-bar";
 import { CustomHeader } from "../components/CustomHeader";
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient'
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PassportSkeleton } from "@/components/Skeletons";
 import { ProfileService } from "@/services/profileService";
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from "rn-tourguide";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const Passport = () => {
+type PassportParams = {
+  Passport: {
+    triggerTutorial?: boolean
+  }
+}
+
+const PassportContent = () => {
   const navigation = useNavigation<any>()
+  const route = useRoute<RouteProp<PassportParams, 'Passport'>>()
+  const { triggerTutorial } = route.params || {}
+  const { canStart, start, stop } = useTourGuideController()
 
   const {
     loading, username, totalKm, citiesCount,
@@ -22,10 +33,33 @@ export const Passport = () => {
   const [avatar, setAvatar] = useState('account')
   const [bio, setBio] = useState('');
 
+  const [isUIReady, setIsUIReady] = useState(false)
+
+  useEffect(() => {
+    if(isUIReady && canStart) {
+      const initTutorial = async () => {
+        const hasSeen = await AsyncStorage.getItem('HAS_SEEN_PASSPORT_TUTORIAL')
+
+        if (triggerTutorial || !hasSeen) {
+          setTimeout(() => {
+            start(1)
+            // AsyncStorage.setItem('HAS_SEEN_PASSPORT_TUTORIAL', 'true')
+          }, 1000)
+        }
+      }
+
+      initTutorial()
+    }
+  }, [isUIReady, canStart, triggerTutorial])
+
   useFocusEffect(
     useCallback(() => {
       fetchProfileIdentify()
-    }, [])
+
+      setIsUIReady(false)
+
+      return () => { stop() }
+    }, [triggerTutorial, canStart])
   )
 
   const fetchProfileIdentify = async () => {
@@ -87,24 +121,37 @@ export const Passport = () => {
         </View>
 
         {/* Barra de XP */}
-        <View style={styles.xpContainer}>
-          <View style={styles.xpHeader}>
-            <Text style={styles.xpText}>Nível {currentLevel.level_number}</Text>
-            <Text style={styles.xpText}>
-              {totalKm.toFixed(1)} / {nextLevel.min_km} km
-            </Text>
-          </View>
-          <View style={styles.xpBarBg}>
-            <LinearGradient
-              colors={[currentLevel.color, theme.colors.primary]}
-              start={{ x: 0, y: 0}}
-              end={{ x: 1, y: 0}}
-              style={[styles.xpBarFill, { width: `${progress * 100}%` }]}
-            />
-          </View>
-          <Text style={styles.xpNextText}>
-            Faltam {(nextLevel.min_km - totalKm).toFixed(1)} km para {nextLevel.title}
-          </Text>
+        <View
+          onLayout={() => {
+            if (!isUIReady) setIsUIReady(true)
+          }}
+        >
+          <TourGuideZone
+            zone={1}
+            text="Acompanhe aqui o seu progresso para o próximo nível!"
+            borderRadius={12}
+            keepTooltipPosition={true}
+          >
+            <View style={styles.xpContainer}>
+              <View style={styles.xpHeader}>
+                <Text style={styles.xpText}>Nível {currentLevel.level_number}</Text>
+                <Text style={styles.xpText}>
+                  {totalKm.toFixed(1)} / {nextLevel.min_km} km
+                </Text>
+              </View>
+              <View style={styles.xpBarBg}>
+                <LinearGradient
+                  colors={[currentLevel.color, theme.colors.primary]}
+                  start={{ x: 0, y: 0}}
+                  end={{ x: 1, y: 0}}
+                  style={[styles.xpBarFill, { width: `${progress * 100}%` }]}
+                />
+              </View>
+              <Text style={styles.xpNextText}>
+                Faltam {(nextLevel.min_km - totalKm).toFixed(1)} km para {nextLevel.title}
+              </Text>
+            </View>
+          </TourGuideZone>
         </View>
 
         {/* Estatísticas */}
@@ -167,6 +214,24 @@ export const Passport = () => {
         <View style={{height: 20}} />
       </ScrollView>
     </View>
+  )
+}
+
+export const Passport = () => {
+  return (
+    <TourGuideProvider
+      androidStatusBarVisible={true}
+      backdropColor="rgba(0, 0, 0, 0)"
+      animationDuration={300}
+      labels={{
+        previous: 'Anterior',
+        next: 'Próximo',
+        skip: 'Pular',
+        finish: 'Ok, Entendi!'
+      }}
+    >
+      <PassportContent />
+    </TourGuideProvider>
   )
 }
 

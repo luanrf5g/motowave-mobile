@@ -1,12 +1,16 @@
+import { GestureHandlerRootView} from 'react-native-gesture-handler'
+import { useCallback, useEffect } from 'react';
 import { Platform, View } from 'react-native';
-import { Routes } from './src/routes';
-import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider } from 'react-native-rapi-ui'
+import Toast from 'react-native-toast-message';
+
 import * as SplashScreen from 'expo-splash-screen'
 import * as NavigationBar from 'expo-navigation-bar'
 import * as SystemUI from 'expo-system-ui'
+import { StatusBar } from 'expo-status-bar';
 
-import { TourGuideProvider } from 'rn-tourguide'
+import { Routes } from './src/routes';
+import { toastConfig } from './src/config/toastConfig';
 
 import {
   useFonts,
@@ -14,10 +18,7 @@ import {
   Orbitron_500Medium,
   Orbitron_700Bold
 } from '@expo-google-fonts/orbitron'
-import { useCallback, useEffect } from 'react';
-import Toast from 'react-native-toast-message';
-import { toastConfig } from './src/config/toastConfig';
-import { GestureHandlerRootView} from 'react-native-gesture-handler'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,6 +37,8 @@ export default function App() {
         await NavigationBar.setStyle('dark')
       }
     }
+
+
     configurateSystem();
   }, [])
 
@@ -52,23 +55,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }} >
       <View style={{flex: 1, backgroundColor: '#121212'}} onLayout={onLayoutRootView}>
-          <ThemeProvider theme='dark'>
-      <TourGuideProvider
-        androidStatusBarVisible={true}
-        backdropColor='rgba(0, 0, 0, 0.7)'
-        labels={{
-          previous: 'Anterior',
-          next: 'Próximo',
-          skip: 'Pular',
-          finish: 'Ir para o Passaporte.'
-        }}
-      >
-            <StatusBar style='light' backgroundColor='transparent' translucent/>
-            <Routes />
+        <ThemeProvider theme='dark'>
+          <StatusBar style='light' backgroundColor='transparent' translucent/>
+          <Routes />
 
-            <Toast config={toastConfig} />
-        </TourGuideProvider>
-          </ThemeProvider>
+          <Toast config={toastConfig} />
+        </ThemeProvider>
       </View>
     </GestureHandlerRootView>
   );

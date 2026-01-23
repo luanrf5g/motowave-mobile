@@ -11,49 +11,46 @@ import { BlurView } from 'expo-blur'
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { SaveTripModal } from "../components/saveTripModal"
 import { showToast } from "../utils/toast"
-import { TourGuideZone, useTourGuideController } from 'rn-tourguide'
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const { width, height } = Dimensions.get('window')
 
-export const Home = () => {
+const HomeContent = () => {
   const navigation = useNavigation<any>();
   const {
     location, distance, route, cities, isTracking,
     toggleTracking, resetTrip
   } = useTripRecorder()
+
   const { canStart, start, stop, eventEmitter } = useTourGuideController()
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false)
 
+  const [isUIReady, setIsUIReady] = useState(false)
+
   useEffect(() => {
-    if (canStart) {
-      const timer = setTimeout(() => {
-        start();
-      }, 1500);
+    const initHomeTutorial = async () => {
+      const hasSeen = await AsyncStorage.getItem('HAS_SEEN_HOME_TUTORIAL')
 
-       return () => clearTimeout(timer);
-    }
-
-    const handleStop = async () => {
-      navigation.navigate('Passport')
-      console.log('navigation')
-    }
-
-    eventEmitter?.on('stop', handleStop)
-    return () => eventEmitter?.off('stop', handleStop)
-  }, [])
-
-  const checkTutorial = async () => {
-    const hasSeen = await AsyncStorage.getItem('HAS_SEEN_HOME_TUTORIAL')
-    if (!hasSeen) {
-      if (canStart) {
-        start()
-        await AsyncStorage.setItem('HAS_SEEN_HOME_TUTORIAL', 'true')
+      if (!hasSeen && isUIReady && canStart) {
+        setTimeout(() => {
+          start(1);
+       // AsyncStorage.setItem('HAS_SEEN_HOME_TUTORIAL', 'true')
+        }, 1000)
       }
     }
-  }
+
+    initHomeTutorial()
+
+    const handleStop = () => {
+      navigation.navigate('Passport', { triggerTutorial: true })
+    }
+    eventEmitter?.on('stop', handleStop)
+    return () => eventEmitter?.off('stop', handleStop)
+
+  }, [isUIReady, canStart, eventEmitter]);
 
   const confirmReset = () => {
     Alert.alert("Confirmar", "Deseja realmente apagar o registro local?", [
@@ -105,7 +102,6 @@ export const Home = () => {
 
   return (
     <View style={styles.container}>
-
       {location ? (
         <MapView
           provider={PROVIDER_GOOGLE}
@@ -140,34 +136,38 @@ export const Home = () => {
         </View>
       )}
 
-        <View style={styles.hudPosition}>
-      <TourGuideZone
-        zone={1}
-        text="Aqui você vê seus KMs e cidades em tempo real."
-        borderRadius={18}
-        style={styles.hudVisual}
-      >
-          <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" experimentalBlurMethod="dimezisBlurView" style={styles.glassContainer}>
+        <View
+          style={styles.hudPosition}
+          onLayout={() => { if (!isUIReady) setIsUIReady(true) }}
+        >
+          <TourGuideZone
+            zone={1}
+            text="Aqui você vê seus KMs e cidades em tempo real."
+            borderRadius={18}
+          >
+            <View style={styles.hudVisual}>
+              <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" experimentalBlurMethod="dimezisBlurView" style={styles.glassContainer}>
 
-            {/* Distância */}
-            <View style={styles.hudItem}>
-              <Text style={styles.hudLabel}>DISTÂNCIA</Text>
-              <Text style={styles.hudValue}>
-                {distance.toFixed(1)}
-                <Text style={styles.hudUnit}> km</Text>
-              </Text>
+                {/* Distância */}
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudLabel}>DISTÂNCIA</Text>
+                  <Text style={styles.hudValue}>
+                    {distance.toFixed(1)}
+                    <Text style={styles.hudUnit}> km</Text>
+                  </Text>
+                </View>
+
+                {/* Divisor NEON */}
+                <View style={styles.neonDivider} />
+
+                {/* Cidades */}
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudLabel}>CIDADES</Text>
+                  <Text style={styles.hudValue}>{cities.length}</Text>
+                </View>
+              </BlurView>
             </View>
-
-            {/* Divisor NEON */}
-            <View style={styles.neonDivider} />
-
-            {/* Cidades */}
-            <View style={styles.hudItem}>
-              <Text style={styles.hudLabel}>CIDADES</Text>
-              <Text style={styles.hudValue}>{cities.length}</Text>
-            </View>
-          </BlurView>
-      </TourGuideZone>
+          </TourGuideZone>
         </View>
 
       {/* Controles */}
@@ -229,6 +229,23 @@ export const Home = () => {
   )
 }
 
+export const Home = () => {
+  return (
+    <TourGuideProvider
+      androidStatusBarVisible={true}
+      backdropColor="rgba(0, 0, 0, 0.7)"
+      labels={{
+        previous: 'Anterior',
+        next: 'Próximo',
+        skip: 'Pular',
+        finish: 'Ir para Passaporte'
+      }}
+    >
+      <HomeContent />
+    </TourGuideProvider>
+  )
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -255,7 +272,7 @@ const styles = StyleSheet.create({
     top: 60,
     alignSelf: 'center',
     width: '90%',
-    zIndex: 10, // Importante para garantir que fique acima do mapa
+    zIndex: 10,
   },
 
   hudVisual: {
