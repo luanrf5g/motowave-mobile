@@ -1,8 +1,8 @@
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { FlashList } from '@shopify/flash-list'
 import format from "date-fns/format";
 import { ptBR } from "date-fns/locale";
@@ -16,19 +16,67 @@ import { TripHistoryItem } from "../services/tripServices";
 import { theme } from "../config/theme";
 import { HistorySkeleton } from "@/components/Skeletons";
 
-export const History = () => {
-  const navigation = useNavigation<any>()
-  const { history, loading, loadHistory, handleDeleteTrip} = useTripHistory()
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
+import { useCallback, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-  const renderCard = ({item}: {item: TripHistoryItem}) => {
+type HistoryParams = {
+  History: {
+    triggerTutorial?: boolean
+  }
+}
+
+const HistoryContent = () => {
+  const navigation = useNavigation<any>()
+  const route = useRoute<RouteProp<HistoryParams, 'History'>>()
+  const { triggerTutorial } = route.params || {}
+
+  const { history, loading, loadHistory, handleDeleteTrip} = useTripHistory()
+  const { canStart, start, stop } = useTourGuideController()
+
+  const [isListReady, setIsListReady] = useState(false)
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory()
+
+      const initTutorial = async () => {
+        const hasSeen = await AsyncStorage.getItem('HAS_SEEN_HISTORY_TUTORIAL')
+
+        if((triggerTutorial || !hasSeen) && history.length > 0 && isListReady) {
+          if (canStart) {
+            setTimeout(() => {
+              start(1)
+              AsyncStorage.setItem('HAS_SEEN_HISTORY_TUTORIAL', 'true')
+            }, 1000)
+          }
+        }
+      }
+
+      if (isListReady) {
+        initTutorial()
+      }
+
+      return () => stop()
+    }, [triggerTutorial, canStart, isListReady, history.length])
+  )
+
+  const handlePressedCard = (item: TripHistoryItem) => {
+    navigation.navigate('TripDetails', {
+      tripId: item.id,
+      triggerTutorial: true
+    })
+  }
+
+  const renderCard = ({item, index}: {item: TripHistoryItem, index: number}) => {
     const dateFormatted = format(new Date(item.created_at), "d MMM, yyy", { locale: ptBR })
     const hasStartPoint = item.start_lat && item.start_lon ? true : false;
 
-    return (
+    const cardContent = (
       <TouchableOpacity
         style={styles.cardContainer}
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('TripDetails', { tripId: item.id })}
+        onPress={() => handlePressedCard(item)}
       >
         {/* HEADER DO CARD */}
         <View style={styles.cardHeader}>
@@ -99,7 +147,22 @@ export const History = () => {
           </View>
         </View>
       </TouchableOpacity>
-    )
+    );
+
+    if (index === 0) {
+      return (
+        <TourGuideZone
+          zone={1}
+          text="Esta é a sua última viagem. Toque nela para ver os detalhes e compartilhar."
+          borderRadius={theme.sizes.radius}
+          shape="rectangle"
+        >
+          {cardContent}
+        </TourGuideZone>
+      )
+    }
+
+    return cardContent;
   }
 
   return (
@@ -121,17 +184,36 @@ export const History = () => {
           <Text style={styles.emptySubtext}>Acele e sua história aparecerá aqui.</Text>
         </View>
       ) : (
-        <FlashList
-          data={history}
-          keyExtractor={item => item.id}
-          renderItem={renderCard}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshing={loading}
-          onRefresh={() => loadHistory(true)}
-        />
+        <View style={{ flex: 1 }} onLayout={() => setIsListReady(true)}>
+          <FlashList
+            data={history}
+            keyExtractor={item => item.id}
+            renderItem={renderCard}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={() => loadHistory(true)}
+          />
+        </View>
       )}
     </View>
+  )
+}
+
+export const History = () => {
+  return (
+    <TourGuideProvider
+      androidStatusBarVisible={true}
+      backdropColor="rgba(0, 0, 0, 0.7)"
+      labels={{
+        previous: 'Anterior',
+        next: 'Próximo',
+        skip: 'Pular',
+        finish: 'Ok, Entendi!'
+      }}
+    >
+      <HistoryContent />
+    </TourGuideProvider>
   )
 }
 

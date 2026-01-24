@@ -23,7 +23,7 @@ const HomeContent = () => {
     toggleTracking, resetTrip
   } = useTripRecorder()
 
-  const { canStart, start, stop, eventEmitter } = useTourGuideController()
+  const { canStart, start, eventEmitter } = useTourGuideController()
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false)
@@ -37,7 +37,7 @@ const HomeContent = () => {
       if (!hasSeen && isUIReady && canStart) {
         setTimeout(() => {
           start(1);
-       // AsyncStorage.setItem('HAS_SEEN_HOME_TUTORIAL', 'true')
+          AsyncStorage.setItem('HAS_SEEN_HOME_TUTORIAL', 'true')
         }, 1000)
       }
     }
@@ -95,8 +95,9 @@ const HomeContent = () => {
     setIsSaving(false)
     if (success) {
       setShowSaveModal(false)
-      resetTrip();
       showToast.success('Sucesso!', 'Sua aventura foi salva no passaporte.')
+      resetTrip();
+      navigation.navigate('History', { triggerTutorial: true })
     }
   }
 
@@ -109,6 +110,7 @@ const HomeContent = () => {
           customMapStyle={darkMapStyle}
           showsUserLocation
           showsMyLocationButton={false}
+          onLayout={() => { if (!isUIReady) setIsUIReady(true) }}
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -138,7 +140,7 @@ const HomeContent = () => {
 
         <View
           style={styles.hudPosition}
-          onLayout={() => { if (!isUIReady) setIsUIReady(true) }}
+
         >
           <TourGuideZone
             zone={1}

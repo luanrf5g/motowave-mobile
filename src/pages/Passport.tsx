@@ -43,7 +43,7 @@ const PassportContent = () => {
         if (triggerTutorial || !hasSeen) {
           setTimeout(() => {
             start(1)
-            // AsyncStorage.setItem('HAS_SEEN_PASSPORT_TUTORIAL', 'true')
+            AsyncStorage.setItem('HAS_SEEN_PASSPORT_TUTORIAL', 'true')
           }, 1000)
         }
       }

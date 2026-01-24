@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, Keyboard, KeyboardAvoidingView, Platform } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import MapView, {Polyline, Marker, PROVIDER_GOOGLE} from "react-native-maps"
@@ -13,14 +13,54 @@ import { theme } from "../config/theme"
 import { showToast } from "@/utils/toast"
 import { TripServices } from "@/services/tripServices"
 
-export const TripDetails = () => {
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
+import { RouteProp, useFocusEffect, useRoute } from "@react-navigation/native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+type DetailsParams = {
+  TripDetails: {
+    tripId: string,
+    triggerTutorial: boolean
+  }
+}
+
+const DetailsContent = () => {
+  const route = useRoute<RouteProp<DetailsParams, 'TripDetails'>>()
+  const { triggerTutorial } = route.params || {}
+
   const { trip, loading, navigation } = useTripDetails()
+  const { canStart, start, stop } = useTourGuideController()
+
   const [showShare, setShowShare] = useState(false)
   const mapRef = useRef<MapView>(null);
 
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
+  const [isUIReady, setIsUIReady] = useState(false)
+
+  useEffect(() => {
+    if (trip && isUIReady && canStart) {
+      const initTutorial = async () => {
+        const hasSeen = await AsyncStorage.getItem('HAS_SEEN_DETAILS_TUTORIAL')
+
+        if (triggerTutorial || !hasSeen) {
+          setTimeout(() => {
+            start(1)
+            AsyncStorage.setItem('HAS_SEEN_DETAILS_TUTORIAL', 'true')
+          }, 1000)
+        }
+      }
+
+      initTutorial()
+    }
+  }, [trip, isUIReady, canStart, triggerTutorial])
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => stop()
+    }, [])
+  )
 
   const focusMap = (editingMode = false) => {
     const bottomPadding = editingMode ? 450 : 250;
@@ -130,7 +170,7 @@ export const TripDetails = () => {
         style={styles.keyboardAvoidingContainer}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 50}
       >
-        <View style={styles.infoCard}>
+        <View style={styles.infoCard} onLayout={() => setIsUIReady(true)}>
           <View style={styles.dragHandle}/>
 
           <View style={styles.headerRow}>
@@ -156,14 +196,20 @@ export const TripDetails = () => {
                   </TouchableOpacity>
                 </View>
               ): (
-                <TouchableOpacity
-                  style={styles.titleWrapper}
-                  onPress={() => setIsEditing(true)}
-                  activeOpacity={0.7}
+                <TourGuideZone
+                  zone={1}
+                  text="Toque aqui para alterar o nome da sua viagem."
+                  borderRadius={10}
                 >
-                  <Text style={styles.tripTitle}>{trip.title || "Sem Título"}</Text>
-                  <MaterialCommunityIcons name="pencil-outline" size={19} color='#666' style={{marginLeft: 10}} />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.titleWrapper}
+                    onPress={() => setIsEditing(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.tripTitle}>{trip.title || "Sem Título"}</Text>
+                    <MaterialCommunityIcons name="pencil-outline" size={19} color='#666' style={{marginLeft: 10}} />
+                  </TouchableOpacity>
+                </TourGuideZone>
               )}
               <Text style={styles.tripDate}>
                 {format(new Date(trip.created_at), "dd 'de' MMMM, yyyy", { locale: ptBR })}
@@ -174,34 +220,40 @@ export const TripDetails = () => {
             </View>
           </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <View style={[styles.iconBox, { backgroundColor: theme.colors.primaryTranslucent }]}>
-                <MaterialCommunityIcons name="map-marker-distance" size={20} color={theme.colors.primary} />
+          <TourGuideZone
+            zone={2}
+            text="Veja o resumo da sua viagem aqui."
+            borderRadius={16}
+          >
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <View style={[styles.iconBox, { backgroundColor: theme.colors.primaryTranslucent }]}>
+                  <MaterialCommunityIcons name="map-marker-distance" size={20} color={theme.colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.statValue}>
+                    {trip.total_distance.toFixed(1)}
+                    <Text style={styles.statUnit}> km</Text>
+                  </Text>
+                  <Text style={styles.statLabel}>
+                    Distância
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.statValue}>
-                  {trip.total_distance.toFixed(1)}
-                  <Text style={styles.statUnit}> km</Text>
-                </Text>
-                <Text style={styles.statLabel}>
-                  Distância
-                </Text>
+
+              <View style={styles.divider} />
+
+              <View style={styles.statItem}>
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
+                  <FontAwesome5 name="map-marked-alt" size={16} color={theme.colors.info} />
+                </View>
+                <View>
+                  <Text style={styles.statValue}>{trip.cities.length}</Text>
+                  <Text style={styles.statLabel}>Cidades</Text>
+                </View>
               </View>
             </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.statItem}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.2)' }]}>
-                <FontAwesome5 name="map-marked-alt" size={16} color={theme.colors.info} />
-              </View>
-              <View>
-                <Text style={styles.statValue}>{trip.cities.length}</Text>
-                <Text style={styles.statLabel}>Cidades</Text>
-              </View>
-            </View>
-          </View>
+          </TourGuideZone>
 
           {trip.cities.length > 0 && (
             <View style={styles.routeSection}>
@@ -214,9 +266,20 @@ export const TripDetails = () => {
         </View>
       </KeyboardAvoidingView>
 
-      <TouchableOpacity style={styles.fabShare} onPress={() => setShowShare(true)}>
-        <MaterialCommunityIcons name="share-variant" size={24} color="#fff" />
-      </TouchableOpacity>
+      <View style={styles.fabShare}>
+        <TourGuideZone
+          zone={3}
+          text="Gere um card incrível para postar no seu Stories!"
+          shape="circle"
+        >
+          <TouchableOpacity
+            style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}
+            onPress={() => setShowShare(true)}
+          >
+            <MaterialCommunityIcons name="share-variant" size={24} color="#fff" />
+          </TouchableOpacity>
+        </TourGuideZone>
+      </View>
 
       <TripShareModal
         visible={showShare}
@@ -224,6 +287,23 @@ export const TripDetails = () => {
         trip={trip}
       />
     </View>
+  )
+}
+
+export const TripDetails = () => {
+  return (
+    <TourGuideProvider
+      androidStatusBarVisible={true}
+      backdropColor="rgba(0, 0, 0, 0.7)"
+      labels={{
+        previous: 'Anterior',
+        next: 'Próximo',
+        skip: 'Pular',
+        finish: 'Vamos lá.'
+      }}
+    >
+      <DetailsContent />
+    </TourGuideProvider>
   )
 }
 

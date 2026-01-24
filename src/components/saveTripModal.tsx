@@ -48,7 +48,6 @@ export const SaveTripModal = ({
       : tripTitle;
 
     onConfirm(finalTitle);
-    setTripTitle(""); // Limpa o input para a próxima
   };
 
   return (
