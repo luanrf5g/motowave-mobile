@@ -1,8 +1,10 @@
 import { useCallback, useState } from "react"
-import { TripHistoryItem, TripServices } from "../services/tripServices"
 import { useFocusEffect } from "@react-navigation/native"
 import { Alert } from "react-native"
-import { showToast } from "../utils/toast"
+
+import { showToast } from "@/utils/toast"
+
+import { TripHistoryItem, TripServices } from "@/services/tripServices"
 
 export const useTripHistory = () => {
   const [history, setHistory] = useState<TripHistoryItem[]>([])

@@ -1,5 +1,5 @@
-import { supabase } from "../lib/supabase";
-import { showToast } from "../utils/toast";
+import { supabase } from "@/lib/supabase";
+import { showToast } from "@/utils/toast";
 
 // tipagem do corpo das cidades
 export interface City {

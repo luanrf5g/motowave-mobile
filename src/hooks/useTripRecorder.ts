@@ -1,10 +1,11 @@
-import * as Location from 'expo-location'
 import { useEffect, useRef, useState } from 'react';
-import { City } from '../services/tripServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform, ToastAndroid } from 'react-native';
 import haversine from 'haversine';
-import { showToast } from '../utils/toast';
+import * as Location from 'expo-location'
+
+import { showToast } from '@/utils/toast';
+
+import { City } from '@/services/tripServices';
 
 const STORAGE_KEYS = {
   ROUTE: '@motowave:route',

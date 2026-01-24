@@ -1,9 +1,11 @@
-import { AuthService } from "@/services/authService"
-import { ProfileService, UserProfile } from "@/services/profileService"
-import { showToast } from "@/utils/toast"
-import { useNavigation } from "@react-navigation/native"
 import { useEffect, useState } from "react"
 import { Alert } from "react-native"
+import { useNavigation } from "@react-navigation/native"
+
+import { showToast } from "@/utils/toast"
+
+import { AuthService } from "@/services/authService"
+import { ProfileService, UserProfile } from "@/services/profileService"
 
 export const useProfileSettings = () => {
   const navigation = useNavigation()

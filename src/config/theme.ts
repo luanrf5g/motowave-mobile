@@ -29,18 +29,16 @@ export const theme = {
   },
 
   fonts: {
-    // Vamos usar a Orbitron para Títulos e Números (HUD)
     title: 'Orbitron_700Bold',
     subtitle: 'Orbitron_500Medium',
 
-    // Podemos usar a Orbitron Regular ou a fonte padrão do sistema para textos longos
-    // para facilitar a leitura, mas aqui configurei tudo como Orbitron por enquanto
+    bold: 'Orbitron_700Bold',
     body: 'Orbitron_400Regular',
   },
 
   sizes: {
     padding: 20,
-    radius: 16, // Bordas arredondadas padrão dos cards
+    radius: 16,
     headerHeight: 60,
   }
 }

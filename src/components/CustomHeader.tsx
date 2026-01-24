@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 
 import { ProfileService } from '@/services/profileService';
 import { normalizeStateCode } from '@/utils/stateNormalize';
+import { theme } from '@/config/theme';
 
 interface CustomHeaderProps {
   showNotification?: boolean;
@@ -132,9 +133,9 @@ export const CustomHeader = ({ showNotification = false }: CustomHeaderProps) =>
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#121212', // Fundo Dark
+    backgroundColor: theme.colors.background, // Fundo Dark
     borderBottomWidth: 1,
-    borderBottomColor: '#1E1E1E', // Separação sutil
+    borderBottomColor: theme.colors.surface, // Separação sutil
     zIndex: 100,
   },
   statusBar: {

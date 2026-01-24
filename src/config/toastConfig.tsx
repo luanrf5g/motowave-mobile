@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, Dimensions } from 'react-native'
-import { BaseToast, BaseToastProps } from 'react-native-toast-message'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+
 import { theme } from './theme'
 
 const { width } = Dimensions.get('window')

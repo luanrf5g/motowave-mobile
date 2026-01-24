@@ -1,8 +1,10 @@
-import { supabase } from "@/lib/supabase"
-import { ProfileService } from "@/services/profileService"
-import { TripServices } from "@/services/tripServices"
-import { useFocusEffect } from "@react-navigation/native"
 import { useCallback, useState } from "react"
+import { useFocusEffect } from "@react-navigation/native"
+
+import { supabase } from "@/lib/supabase"
+
+import { TripServices } from "@/services/tripServices"
+import { ProfileService } from "@/services/profileService"
 
 export interface Level {
   level_number: number,

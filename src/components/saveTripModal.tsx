@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Dimensions
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -23,7 +22,7 @@ interface City {
 interface SaveTripModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (title: string) => void; // A Home receberá o título aqui
+  onConfirm: (title: string) => void;
   distance: number;
   cities: City[];
   isSaving: boolean;
@@ -41,8 +40,6 @@ export const SaveTripModal = ({
   const [tripTitle, setTripTitle] = useState("");
 
   const handleConfirm = () => {
-    // Se o usuário não digitar nada, definimos um padrão aqui ou na Home.
-    // Vou enviar vazio e a Home decide, ou enviamos um padrão.
     const finalTitle = tripTitle.trim() === ""
       ? `Viagem de ${new Date().toLocaleDateString('pt-BR')}`
       : tripTitle;

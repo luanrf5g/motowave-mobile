@@ -1,8 +1,10 @@
-import { useNavigation, useRoute } from "@react-navigation/native"
 import { useEffect, useRef, useState } from "react";
-import { TripFullDetail, TripServices } from "../services/tripServices";
+import { useNavigation, useRoute } from "@react-navigation/native"
 import MapView from "react-native-maps";
-import { showToast } from "../utils/toast";
+
+import { showToast } from "@/utils/toast";
+
+import { TripFullDetail, TripServices } from "@/services/tripServices";
 
 export const useTripDetails = () => {
   const route = useRoute()

@@ -1,10 +1,12 @@
 import { StatusBar } from "expo-status-bar"
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { useCityMap } from "../hooks/useCityMap"
-import { theme } from "../config/theme"
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps"
-import { darkMapStyle } from "../styles/mapStyle"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
+import { theme } from "@/config/theme"
+import { darkMapStyle } from "@/styles/mapStyle"
+
+import { useCityMap } from "@/hooks/useCityMap"
 
 export const Cities = () => {
   const { cities, loading, mapRef, navigation } = useCityMap()
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
   },
   counterText: {
     color: '#FFF',
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     marginLeft: 8,
     fontSize: 14
   }

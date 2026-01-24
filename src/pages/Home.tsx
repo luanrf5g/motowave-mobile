@@ -1,18 +1,21 @@
-import { ActivityIndicator, Alert, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { useTripRecorder } from "../hooks/useTripRecorder"
 import { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
+import { ActivityIndicator, Alert, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { TripServices } from "../services/tripServices"
-import { theme } from "../config/theme"
-import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps"
-import { darkMapStyle } from "../styles/mapStyle"
-import { BlurView } from 'expo-blur'
-import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { SaveTripModal } from "../components/saveTripModal"
-import { showToast } from "../utils/toast"
-import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps"
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { BlurView } from 'expo-blur'
+
+import { theme } from "@/config/theme"
+import { showToast } from "@/utils/toast"
+import { supabase } from "@/lib/supabase"
+import { darkMapStyle } from "@/styles/mapStyle"
+
+import { TripServices } from "@/services/tripServices"
+import { useTripRecorder } from "@/hooks/useTripRecorder"
+
+import { SaveTripModal } from "@/components/saveTripModal"
 
 const { width, height } = Dimensions.get('window')
 
@@ -148,7 +151,12 @@ const HomeContent = () => {
             borderRadius={18}
           >
             <View style={styles.hudVisual}>
-              <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" experimentalBlurMethod="dimezisBlurView" style={styles.glassContainer}>
+              <BlurView
+                intensity={Platform.OS === 'ios' ? 40 : 100}
+                tint="dark"
+                experimentalBlurMethod="dimezisBlurView"
+                style={styles.glassContainer}
+              >
 
                 {/* Distância */}
                 <View style={styles.hudItem}>
@@ -311,14 +319,14 @@ const styles = StyleSheet.create({
   hudLabel: {
     fontSize: 10,
     color: theme.colors.primary,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     textShadowColor: theme.colors.primaryTranslucent,
     textShadowRadius: 10,
   },
   hudValue: {
     fontSize: 32,
     color: theme.colors.text,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     letterSpacing: 2,
     marginBottom: 4
   },
@@ -354,7 +362,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: '#fff',
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     fontSize: 16,
     letterSpacing: 1
   }

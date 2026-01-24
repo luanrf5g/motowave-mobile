@@ -1,16 +1,19 @@
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
-import { InteractionManager, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { usePassport } from "../hooks/usePassport"
-import { theme } from "../config/theme";
-import { StatusBar } from "expo-status-bar";
-import { CustomHeader } from "../components/CustomHeader";
-import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from "react";
-import { PassportSkeleton } from "@/components/Skeletons";
-import { ProfileService } from "@/services/profileService";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native"
 import { TourGuideProvider, TourGuideZone, useTourGuideController } from "rn-tourguide";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient'
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+
+import { theme } from "@/config/theme";
+
+import { usePassport } from "@/hooks/usePassport"
+import { ProfileService } from "@/services/profileService";
+
+import { CustomHeader } from "@/components/CustomHeader";
+import { PassportSkeleton } from "@/components/Skeletons";
 
 type PassportParams = {
   Passport: {
@@ -134,7 +137,7 @@ const PassportContent = () => {
           >
             <View style={styles.xpContainer}>
               <View style={styles.xpHeader}>
-                <Text style={styles.xpText}>Nível {currentLevel.level_number}</Text>
+                <Text style={[styles.xpText, { fontFamily: theme.fonts.bold }]}>Nível {currentLevel.level_number}</Text>
                 <Text style={styles.xpText}>
                   {totalKm.toFixed(1)} / {nextLevel.min_km} km
                 </Text>
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
   },
   levelBadgeText: {
     color: '#fff',
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     fontSize: 14,
   },
 
@@ -319,7 +322,7 @@ const styles = StyleSheet.create({
 
   userBio: {
     fontSize: 12,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.body,
     color: theme.colors.textSecondary,
     marginTop: 8,
     fontStyle: 'italic',
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
   xpText: {
     color: theme.colors.textSecondary,
     fontSize: 12,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.body,
   },
   xpBarBg: {
     height: 8,
@@ -358,7 +361,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 8,
     textAlign: 'center',
-    fontFamily: theme.fonts.title
+    fontFamily: theme.fonts.body
   },
   statsContainer: {
     flexDirection: 'row',
@@ -386,13 +389,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     color: theme.colors.text,
   },
   statLabel: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    fontFamily: theme.fonts.title
+    fontFamily: theme.fonts.body
   },
   section: {
     marginHorizontal: 20,
@@ -405,7 +408,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     color: theme.colors.text,
     marginBottom: 15,
   },

@@ -1,24 +1,23 @@
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useCallback, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { StatusBar } from "expo-status-bar";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import { FlashList } from '@shopify/flash-list'
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import format from "date-fns/format";
 import { ptBR } from "date-fns/locale";
 
-import { darkMapStyle } from "../styles/mapStyle";
-import { CustomHeader } from "../components/CustomHeader";
+import { theme } from "@/config/theme";
+import { darkMapStyle } from "@/styles/mapStyle";
 
-import { useTripHistory } from "../hooks/useTripHistory";
-import { TripHistoryItem } from "../services/tripServices";
+import { useTripHistory } from "@/hooks/useTripHistory";
+import { TripHistoryItem } from "@/services/tripServices";
 
-import { theme } from "../config/theme";
 import { HistorySkeleton } from "@/components/Skeletons";
-
-import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
-import { useCallback, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CustomHeader } from "@/components/CustomHeader";
 
 type HistoryParams = {
   History: {

@@ -1,10 +1,11 @@
+import { useState } from "react"
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+
 import { theme } from "@/config/theme"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/utils/toast"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { useNavigation } from "@react-navigation/native"
-import { useState } from "react"
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 
 export const ContactScreen = () => {
   const navigation = useNavigation()
@@ -90,9 +91,9 @@ const styles = StyleSheet.create({
   backbutton: { alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 28, backgroundColor: theme.colors.primary },
   title: { color: theme.colors.primary, fontSize: 28, fontFamily: theme.fonts.title, marginBottom: 5 },
   subtitle: { color: '#888', fontSize: 14, marginBottom: 30 },
-  label: { color: '#FFF', marginBottom: 8, fontFamily: theme.fonts.title },
+  label: { color: '#FFF', marginBottom: 8, fontFamily: theme.fonts.bold },
   input: { backgroundColor: '#1a1a1a', color: '#FFF', borderRadius: 10, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: '#333' },
   textArea: { height: 150 },
   button: { backgroundColor: theme.colors.primary, padding: 15, borderRadius: 10, alignItems: 'center' },
-  btnText: { fontFamily: theme.fonts.title, fontSize: 16 }
+  btnText: { fontFamily: theme.fonts.bold, fontSize: 16 }
 });

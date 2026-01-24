@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
-  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar,
-  Image
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar, Image
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-import { AuthService } from '../../services/authService';
-import { theme } from '../../config/theme';
-import { showToast } from '../../utils/toast';
+import { theme } from '@/config/theme';
+import { showToast } from '@/utils/toast';
+
+import { AuthService } from '@/services/authService';
 
 export const SignIn = () => {
   const navigation = useNavigation<any>();
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     letterSpacing: 1,
   },
   registerLink: {

@@ -18,7 +18,6 @@ import {
   Orbitron_500Medium,
   Orbitron_700Bold
 } from '@expo-google-fonts/orbitron'
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 SplashScreen.preventAutoHideAsync();
 

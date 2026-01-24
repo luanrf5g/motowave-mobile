@@ -1,21 +1,22 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, Keyboard, KeyboardAvoidingView, Platform } from "react-native"
-import { StatusBar } from "expo-status-bar"
-import MapView, {Polyline, Marker, PROVIDER_GOOGLE} from "react-native-maps"
-import { MaterialCommunityIcons, FontAwesome5, MaterialIcons } from "@expo/vector-icons"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-
-import { TripShareModal } from "@/components/TripShareModal"
-import { useTripDetails } from "../hooks/useTripDetails"
-import { darkMapStyle } from "../styles/mapStyle"
-import { theme } from "../config/theme"
-import { showToast } from "@/utils/toast"
-import { TripServices } from "@/services/tripServices"
-
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native"
 import { TourGuideProvider, TourGuideZone, useTourGuideController } from 'rn-tourguide'
 import { RouteProp, useFocusEffect, useRoute } from "@react-navigation/native"
+import MapView, {Polyline, Marker, PROVIDER_GOOGLE} from "react-native-maps"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons"
+import { StatusBar } from "expo-status-bar"
+import { ptBR } from "date-fns/locale"
+import { format } from "date-fns"
+
+import { theme } from "@/config/theme"
+import { showToast } from "@/utils/toast"
+import { darkMapStyle } from "@/styles/mapStyle"
+
+import { TripServices } from "@/services/tripServices"
+import { useTripDetails } from "@/hooks/useTripDetails"
+
+import { TripShareModal } from "@/components/TripShareModal"
 
 type DetailsParams = {
   TripDetails: {
@@ -216,7 +217,7 @@ const DetailsContent = () => {
               </Text>
             </View>
             <View style={styles.idBadge}>
-              <Text style={styles.idText}>ID: {trip.cities.length > 0 ? 'EXP' : 'RIDE'}</Text>
+              <Text style={styles.idText}>ID: {trip.cities.length > 3 ? 'EXP' : 'RIDE'}</Text>
             </View>
           </View>
 
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
   titleInput: {
     flex: 1,
     fontSize: 24,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     color: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.primary,
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   idText: {
     color: '#aaa',
     fontSize: 10,
-    fontFamily: theme.fonts.title
+    fontFamily: theme.fonts.bold
   },
 
   // Stats
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     color: theme.colors.text,
   },
   statUnit: {

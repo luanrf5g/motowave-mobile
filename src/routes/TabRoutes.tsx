@@ -1,32 +1,12 @@
+import { Platform, StyleSheet, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { Home } from "../pages/Home";
-import { Passport } from "../pages/Passport";
-import { History } from "../pages/History";
-import { Platform, StyleSheet, View } from "react-native";
+import { Home } from "@/pages/Home";
+import { History } from "@/pages/History";
+import { Passport } from "@/pages/Passport";
 
 const Tab = createBottomTabNavigator();
-
-interface CustomIconProps {
-  focused: boolean,
-  name: keyof typeof MaterialCommunityIcons.glyphMap,
-}
-
-const CustomTabBarIcon = ({ focused, name }: CustomIconProps) => {
-  return (
-    <View style={[
-      styles.iconContainer,
-      focused && styles.iconContainerActive
-    ]}>
-      <MaterialCommunityIcons
-        name={name}
-        size={24}
-        color={focused ? '#27AE60' : '#fff'}
-      />
-    </View>
-  )
-}
 
 export const TabRoutes = () => {
   return (

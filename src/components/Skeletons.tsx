@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native"
+
 import { Skeleton } from "./Skeleton";
 
 // 🦴 Skeleton para a tela de History

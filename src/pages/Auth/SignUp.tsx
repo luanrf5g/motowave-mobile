@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-import { AuthService } from '../../services/authService';
-import { theme } from '../../config/theme';
-import { showToast } from '../../utils/toast';
+import { theme } from '@/config/theme';
+import { showToast } from '@/utils/toast';
+
+import { AuthService } from '@/services/authService';
 
 export const SignUp = () => {
   const navigation = useNavigation();

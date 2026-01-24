@@ -1,5 +1,4 @@
 import { StyleSheet, View } from "react-native";
-import { theme } from "../config/theme";
 
 export const PassportSkeleton = () => (
   <View style={styles.container}>
@@ -49,8 +48,25 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     paddingTop: 50
   },
-  section: { margin: 20, backgroundColor: '#000', padding: 20, borderRadius: 15, elevation: 2 },
+  section: {
+    margin: 20,
+    backgroundColor: '#000',
+    padding: 20,
+    borderRadius: 15,
+    elevation: 2
+  },
 
-  statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20 },
-  statCard: { backgroundColor: '#000', width: '48%', padding: 20, borderRadius: 15, alignItems: 'center', elevation: 2 },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20
+  },
+  statCard: {
+    backgroundColor: '#000',
+    width: '48%',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    elevation: 2
+  },
 });

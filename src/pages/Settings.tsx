@@ -1,7 +1,9 @@
-import { theme } from "@/config/theme"
-import { useProfileSettings } from "@/hooks/useProfileSettings"
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+
+import { theme } from "@/config/theme"
+
+import { useProfileSettings } from "@/hooks/useProfileSettings"
 
 const AVATAR_OPTIONS = [
   'motorbike', 'moped', 'racing-helmet', 'engine', 'speedometer', 'road-variant', 'tire',
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'android' ? 50 : 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
     backgroundColor: theme.colors.surface,
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
   // Avatar
   sectionLabel: {
     color: theme.colors.primary,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     fontSize: 12,
     marginBottom: 15,
     letterSpacing: 1
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
   label: {
     color: '#888',
     fontSize: 10,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     marginBottom: 8,
     marginTop: 15,
     marginLeft: 4
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
   readOnlyLabel: {
     color: '#555',
     fontSize: 10,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     marginBottom: 4
   },
   readOnlyValue: {
@@ -286,7 +288,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#000',
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     fontSize: 16
   },
   logoutButton: {
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: theme.colors.danger,
-    fontFamily: theme.fonts.title,
+    fontFamily: theme.fonts.bold,
     marginLeft: 10
   },
   footerText: {

@@ -4,13 +4,16 @@ import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
+import { supabase } from '@/lib/supabase';
+
 import { TabRoutes } from "./TabRoutes";
-import { Cities } from '../pages/Cities';
-import { supabase } from '../lib/supabase';
-import { SignUp } from '../pages/Auth/SignUp';
-import { SignIn } from '../pages/Auth/SignIn';
-import { TripDetails } from '../pages/TripDetails';
+
+import { SignUp } from '@/pages/Auth/SignUp';
+import { SignIn } from '@/pages/Auth/SignIn';
+
+import { Cities } from '@/pages/Cities';
 import { Settings } from '@/pages/Settings';
+import { TripDetails } from '@/pages/TripDetails';
 import { ContactScreen } from '@/pages/ContacScreen';
 
 type RootStackParamList = {

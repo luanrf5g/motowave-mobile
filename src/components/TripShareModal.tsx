@@ -1,29 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Dimensions,
   Image,
   Platform,
   ScrollView
 } from 'react-native';
 import ViewShot from "react-native-view-shot";
+import { LinearGradient } from 'expo-linear-gradient';
+import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+
 import * as Sharing from 'expo-sharing';
 import * as NavigationBar from 'expo-navigation-bar'
-import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
-import { theme } from '../config/theme';
-import { darkMapStyle } from '../styles/mapStyle';
-import { ProfileService } from '../services/profileService';
+import { theme } from '@/config/theme';
 import { showToast } from '@/utils/toast';
+import { darkMapStyle } from '@/styles/mapStyle';
+import { ProfileService } from '@/services/profileService';
 
 const { width, height } = Dimensions.get('window');
 
 const CARD_SCALE = height < 750 ? 0.85 : 1
 const CARD_WIDTH = width * 0.85 * CARD_SCALE
 
-// Interface exata que você forneceu
 export interface TripFullDetail {
   id: string;
   title: string;
@@ -40,18 +46,14 @@ interface TripShareModalProps {
 }
 
 export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) => {
-  // Refs
   const viewShotRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 
-  // Estados de UI
   const [loading, setLoading] = useState(false);
   const [customTitle, setCustomTitle] = useState("");
 
-  // Estados de Usuário
   const [userProfile, setUserProfile] = useState({ username: "Piloto", avatar: "account" });
 
-  // Correção para erro do MapView do android
   const [tempMapImage, setTempMapImage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
       setCustomTitle(trip.title || "Rolê de Moto");
       loadUserProfile();
 
-      // Centraliza o mapa na rota com um pequeno delay para garantir renderização
+      // Funçaõ de centralização do mapa
       if (trip.route_coords.length > 0) {
         setTimeout(() => {
           mapRef.current?.fitToCoordinates(trip.route_coords, {
@@ -105,7 +107,6 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
 
         await new Promise(resolve => setTimeout(resolve, 200))
       } else {
-        // Pequeno delay para garantir que o mapa esteja renderizado
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
@@ -125,10 +126,8 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
     }
   };
 
-  // Se não tiver trip, não renderiza nada
   if (!trip) return null;
 
-  // Helpers de Dados baseados na interface TripFullDetail
   const cityListNames = trip.cities.map(c => c.name);
   const startCity = cityListNames[0] || "Origem";
   const endCity = cityListNames[cityListNames.length - 1] || "Destino";
@@ -203,7 +202,7 @@ export const TripShareModal = ({ visible, onClose, trip }: TripShareModalProps) 
                       <Polyline
                         coordinates={trip.route_coords}
                         strokeWidth={5}
-                        strokeColor="#27AE60" // Verde Neon Solicitado
+                        strokeColor="#27AE60"
                       />
                     )}
                   </MapView>
