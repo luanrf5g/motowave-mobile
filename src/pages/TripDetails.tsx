@@ -44,7 +44,7 @@ const DetailsContent = () => {
       const initTutorial = async () => {
         const hasSeen = await AsyncStorage.getItem('HAS_SEEN_DETAILS_TUTORIAL')
 
-        if (triggerTutorial || !hasSeen) {
+        if (triggerTutorial && !hasSeen) {
           setTimeout(() => {
             start(1)
             AsyncStorage.setItem('HAS_SEEN_DETAILS_TUTORIAL', 'true')

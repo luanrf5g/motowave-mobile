@@ -40,7 +40,7 @@ const PassportContent = () => {
       const initTutorial = async () => {
         const hasSeen = await AsyncStorage.getItem('HAS_SEEN_PASSPORT_TUTORIAL')
 
-        if (triggerTutorial || !hasSeen) {
+        if (triggerTutorial && !hasSeen) {
           setTimeout(() => {
             start(1)
             AsyncStorage.setItem('HAS_SEEN_PASSPORT_TUTORIAL', 'true')
@@ -155,31 +155,46 @@ const PassportContent = () => {
         </View>
 
         {/* Estatísticas */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={[styles.iconBox, {backgroundColor: theme.colors.primaryTranslucent}]}>
-              <MaterialCommunityIcons name="map-marker-distance" size={24} color={theme.colors.primary} />
+        <TourGuideZone
+          zone={2}
+          text="Aqui estão suas estatísticas globais"
+          borderRadius={12}
+          style={{ flex:1 }}
+        >
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <View style={[styles.iconBox, {backgroundColor: theme.colors.primaryTranslucent}]}>
+                <MaterialCommunityIcons name="map-marker-distance" size={24} color={theme.colors.primary} />
+              </View>
+              <View>
+                <Text style={styles.statValue}>{totalKm.toFixed(1)}</Text>
+                <Text style={styles.statLabel}>KM Rodados</Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.statValue}>{totalKm.toFixed(1)}</Text>
-              <Text style={styles.statLabel}>KM Rodados</Text>
-            </View>
-          </View>
 
-          <TouchableOpacity
-            activeOpacity={0.6}
-            onPress={() => navigation.navigate('Cities')}
-            style={styles.statCard}
-          >
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.15)' }]}>
-              <FontAwesome5 name="city" size={20} color={theme.colors.info}/>
-            </View>
-            <View>
-              <Text style={styles.statValue}>{citiesCount}</Text>
-              <Text style={styles.statLabel}>Cidades</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+            <TourGuideZone
+              zone={3}
+              text="Clicando aqui você verá no mapa todas as cidades que visitou!"
+              borderRadius={16}
+              style={styles.statCard}
+            >
+              <TouchableOpacity
+                activeOpacity={0.6}
+                onPress={() => navigation.navigate('Cities')}
+                style={{ flexDirection: 'row' }}
+              >
+                <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.15)' }]}>
+                  <FontAwesome5 name="city" size={20} color={theme.colors.info}/>
+                </View>
+                <View>
+                  <Text style={styles.statValue}>{citiesCount}</Text>
+                  <Text style={styles.statLabel}>Cidades</Text>
+                </View>
+              </TouchableOpacity>
+
+            </TourGuideZone>
+          </View>
+        </TourGuideZone>
 
         {/* Galeria de Conquistas */}
         <View style={styles.section}>
@@ -221,8 +236,7 @@ export const Passport = () => {
   return (
     <TourGuideProvider
       androidStatusBarVisible={true}
-      backdropColor="rgba(0, 0, 0, 0)"
-      animationDuration={300}
+      backdropColor="rgba(0, 0, 0, 0.7)"
       labels={{
         previous: 'Anterior',
         next: 'Próximo',

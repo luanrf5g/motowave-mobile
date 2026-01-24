@@ -47,6 +47,7 @@ const HistoryContent = () => {
           if (canStart) {
             setTimeout(() => {
               start(1)
+              console.log('history: entrou')
               AsyncStorage.setItem('HAS_SEEN_HISTORY_TUTORIAL', 'true')
             }, 1000)
           }
